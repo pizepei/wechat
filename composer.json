@@ -1,0 +1,24 @@
+{
+    "name": "pizepei/wechat",
+    "description": "wechat",
+    "keywords": ["wechat","serve"],
+    "homepage": "https://org.heil.top/",
+    "authors": [
+        {
+            "name": "pizepei",
+            "email": "pizepei@pizepei.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.0.0",
+        "pizepei/config-ng": "dev-master",
+        "pizepei/func": "dev-master",
+    },
+
+    "autoload": {
+        "psr-4": {
+            "pizepei\\wechat\\": "src/"
+        }
+    }
+}
