@@ -8,12 +8,12 @@
  * @utl https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1&id=open1419318587&token=&lang=zh_CN
  */
 
-namespace service\weixin;
+namespace pizepei\wechat\service;
 
-
-use service\weixin\Port\Prpcrypt;
-use service\weixin\Port\SHA1;
-use service\weixin\Port\WXBizMsgCrypt;
+use pizepei\wechat\basics\Func;
+use pizepei\wechat\basics\Prpcrypt;
+use pizepei\wechat\basics\SHA1;
+use pizepei\wechat\basics\WXBizMsgCrypt;
 
 class Open
 {
