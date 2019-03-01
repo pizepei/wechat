@@ -76,20 +76,26 @@ class Open
         }
 
         $decryptionResult = self::decryption($get,$input);
-        $postObj = $decryptionResult['object'];
-        //消息类型分离InfoType
-        self::$InfoType = trim($postObj->InfoType);
-        $result['InfoType'] = self::$InfoType;
-        $result['msg'] = $decryptionResult['msg'];
+        $result['postObj'] = json_decode(json_encode($decryptionResult['object']), true);
 
-        switch (self::$InfoType)
+        //消息类型分离InfoType
+        $result['InfoType'] = $result['postObj']['InfoType'];
+        $result['msg'] = $decryptionResult['msg'];
+        switch ($result['postObj']['InfoType'])
         {
             case "component_verify_ticket":
-                $ComponentVerifyTicket = trim($postObj->ComponentVerifyTicket);
+                $ComponentVerifyTicket = trim($result['postObj']['ComponentVerifyTicket']);
                 self::$Redis->set(self::$Config['appid'].'_ComponentVerifyTicket',$ComponentVerifyTicket);
-                self::component_access_token();
                 $result['result'] = self::component_access_token();
                 break;
+            case "unauthorized":
+
+                break;
+
+            case "authorized":
+
+                break;
+
 
             default:
 
@@ -470,6 +476,23 @@ class Open
     }
 
 
-
+    /**
+     * 将xml转为array
+     * @param  string 	$xml xml字符串或者xml文件名
+     * @param  bool 	$isfile 传入的是否是xml文件名
+     * @return array    转换得到的数组
+     */
+    public static function xmlToArray($xml,$isfile=false){
+        //禁止引用外部xml实体
+        libxml_disable_entity_loader(true);
+        if($isfile){
+            if(!file_exists($xml)) return false;
+            $xmlstr = file_get_contents($xml);
+        }else{
+            $xmlstr = $xml;
+        }
+        $result= json_decode(json_encode(simplexml_load_string($xmlstr, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
+        return $result;
+    }
 
 }
