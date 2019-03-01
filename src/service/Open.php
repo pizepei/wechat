@@ -141,7 +141,7 @@ class Open
         if(empty($redirect_uri)){
             throw new \Exception('redirect_uri是必须的');
         }
-        return $url = 'https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=wx73e16ee94d0617e8&pre_auth_code='.self::pre_auth_code($id)['pre_auth_code'].'&redirect_uri='.$redirect_uri;
+        return $url = 'https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid='.self::$Config['appid'].'&pre_auth_code='.self::pre_auth_code($id)['pre_auth_code'].'&redirect_uri='.$redirect_uri;
     }
     /**
      *  pre_auth_code预授权码用于公众号授权时的第三方平台方安全验证。
@@ -315,10 +315,8 @@ class Open
     {
         //file_put_contents('get',json_encode($get));
         //file_put_contents('input',$input);
-
         $WXBizMsgCrypt       = new WXBizMsgCrypt(self::$Config['token'], self::$Config['encodingAesKey'],self::$Config['appid']);
         $WXBizMsgCrypt->decryptMsg($get['msg_signature'], $get['timestamp'], $get['nonce'], $input, $msg);
-        //file_put_contents('msg',$msg);
 
         libxml_disable_entity_loader(true);
         $object = simplexml_load_string($msg, 'SimpleXMLElement', LIBXML_NOCDATA);
