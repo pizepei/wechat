@@ -88,14 +88,22 @@ class Open
                 self::$Redis->set(self::$Config['appid'].'_ComponentVerifyTicket',$ComponentVerifyTicket);
                 $result['result'] = self::component_access_token();
                 break;
-            case "unauthorized":
+            case "unauthorized"://取消授权
 
                 break;
 
-            case "authorized":
-
+            case "authorized"://授权
+                /**
+                 * 通过授权代码获取授权公众号的基本授权信息(所有)
+                 */
+                $result['authorizerAccessInfo'] = self::auth_code($result['postObj']['AuthorizationCode']);
                 break;
-
+            case "updateauthorized"://修改权限
+                /**
+                 * 通过授权代码获取授权公众号的基本授权信息(所有)
+                 */
+                $result['authorizerAccessInfo'] = self::auth_code($result['postObj']['AuthorizationCode']);
+                break;
 
             default:
 
@@ -105,6 +113,54 @@ class Open
         return $result;
 
     }
+
+    /**
+     * @Author pizepei
+     * @Created 2019/3/2 15:20
+     *
+     * @param $auth_code
+     *
+     * @title  方法标题（一般是方法的简称）
+     * @explain 一般是方法功能说明、逻辑说明、注意事项等。
+     */
+    public static function auth_code($auth_code){
+
+        /**
+         * 通过授权代码获取授权公众号的基本授权信息
+         */
+        $authorizerAccessInfo = self::authorizerAccessInfo(['auth_code'=>$auth_code]);
+        $authorizerAccessInfoData = $authorizerAccessInfo['authorization_info'];
+        /**
+         * 通过授权公众号的appid获取公众号的详细信息
+         */
+        $authorizerInfo = self::authorizerInfo($authorizerAccessInfoData['authorizer_appid']);
+        /**
+         * 合并数据
+         */
+        $authorizerAccessInfoData['PreAuthCode'] = $auth_code;
+
+
+        $authorizerAccessInfoData['nick_name'] = $authorizerInfo['authorizer_info']['nick_name'];
+        $authorizerAccessInfoData['head_img'] = $authorizerInfo['authorizer_info']['head_img'];
+        $authorizerAccessInfoData['service_type_info'] = $authorizerInfo['authorizer_info']['service_type_info'];
+        $authorizerAccessInfoData['verify_type_info'] = $authorizerInfo['authorizer_info']['verify_type_info'];
+        $authorizerAccessInfoData['user_name'] = $authorizerInfo['authorizer_info']['user_name'];
+        $authorizerAccessInfoData['alias'] = $authorizerInfo['authorizer_info']['alias'];
+        $authorizerAccessInfoData['qrcode_url'] = $authorizerInfo['authorizer_info']['qrcode_url'];
+        $authorizerAccessInfoData['business_info'] = $authorizerInfo['authorizer_info']['business_info'];
+        $authorizerAccessInfoData['idc'] = $authorizerInfo['authorizer_info']['idc'];
+        $authorizerAccessInfoData['principal_name'] = $authorizerInfo['authorizer_info']['principal_name'];
+        $authorizerAccessInfoData['signature'] = $authorizerInfo['authorizer_info']['signature'];
+
+        $authorizerAccessInfoData['authorizer_appid'] = $authorizerInfo['authorization_info']['authorizer_appid'];
+        $authorizerAccessInfoData['authorizer_refresh_token'] = $authorizerInfo['authorization_info']['authorizer_refresh_token'];
+        $authorizerAccessInfoData['func_info'] = $authorizerInfo['authorization_info']['func_info'];
+        return $authorizerAccessInfoData;
+
+    }
+
+
+
 
     /**
      * 获取 component_access_token
@@ -139,7 +195,7 @@ class Open
      * 获取授权连接
      * @param null   $id
      * @param string $redirect_uri
-     * @return string
+     * @return array
      * @throws \Exception
      */
     public static function getAccreditUrl($id=null,$redirect_uri='')
@@ -147,7 +203,10 @@ class Open
         if(empty($redirect_uri)){
             throw new \Exception('redirect_uri是必须的');
         }
-        return $url = 'https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid='.self::$Config['appid'].'&pre_auth_code='.self::pre_auth_code($id)['pre_auth_code'].'&redirect_uri='.$redirect_uri;
+        $pre_auth_code = self::pre_auth_code($id)['pre_auth_code'];
+        $url = 'https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid='.self::$Config['appid'].'&pre_auth_code='.$pre_auth_code.'&redirect_uri='.$redirect_uri;
+
+        return ['pre_auth_code'=>$pre_auth_code,'url'=>$url];
     }
     /**
      *  pre_auth_code预授权码用于公众号授权时的第三方平台方安全验证。
