@@ -8,7 +8,6 @@
 namespace pizepei\wechat\basics;
 
 use pizepei\wechat\service\Open;
-use utils\wechatbrief\func;
 use jt\error\Exception;
 use utils\wechatbrief\Config;
 use utils\wechatbrief\RedisModel;
@@ -130,14 +129,13 @@ class AccessToken{
         if($this->config['pattern'] === 'third')
         {
             Open::init($this->config,$this->redis);
-            $this->access_token = Open::authorizer_access_token($authorizerAppid,$authorizerRefreshToken);
+            $this->access_token = Open::authorizer_access_token($authorizerAppid,$authorizerRefreshToken)['authorizer_access_token'];
         }
         else if($this->config['pattern'] === 'tradition')
         {
-
+            $this->tradition_access_token();
         }
         return $this->access_token;
-
      }
     /**
      * [get_access_token 获取数据]
@@ -146,17 +144,17 @@ class AccessToken{
      * @param  [type] $data [description]
      * @return [type]       [description]
      */
-    protected function get_access_token($appid)
+    protected function tradition_access_token()
     {
 
+        $this->redis->get($this->config['prefix'].'access_token'.$this->config['appid']);
+
         $url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=".$this->config['appid']."&secret=".$this->config['appsecret'];
-        $res = func::http_request($url);
-        $this->access_token  = json_decode($res, true);
-
-        if(isset($this->access_token['errcode'])){
-            throw new Exception($this->access_token['errmsg']);
+        $res = Func::http_request($url);
+        $access_token = json_decode($res, true);
+        if(isset($access_token['errcode'])){
+            throw new Exception($access_token['errmsg']);
         }
-        return true;
-
+        return $this->access_token  =$access_token['access_token'];
      }
  }
