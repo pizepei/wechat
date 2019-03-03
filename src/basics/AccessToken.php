@@ -7,6 +7,7 @@
  */
 namespace pizepei\wechat\basics;
 
+use pizepei\wechat\service\Open;
 use utils\wechatbrief\func;
 use jt\error\Exception;
 use utils\wechatbrief\Config;
@@ -120,23 +121,23 @@ class AccessToken{
       * @return [type] [description]
       * @throws \Exception
       */
-     public function access_token(){
+     public function access_token($authorizerAppid = null,$authorizerRefreshToken = null){
 
-         //统一到wechatBase获取accessToken
-         $wechatBase = new WechatBase();
-         $this->access_token = $wechatBase->getAccessToken();
-         return $this->access_token;
+        /**
+        * 判断是否是第三方开发模式
+         * hird 第三方  tradition 传统模式
+        */
+        if($this->config['pattern'] === 'third')
+        {
+            Open::init($this->config,$this->redis);
+            $this->access_token = Open::authorizer_access_token($authorizerAppid,$authorizerRefreshToken);
+        }
+        else if($this->config['pattern'] === 'tradition')
+        {
 
+        }
+        return $this->access_token;
 
-        ////判断存储方式
-        //if($this->config['cache_type']=='redis'){
-        //    //获取
-        //    return $this->redis_cache();
-        //
-        //}else if($this->config['cache_type']=='file'){
-        //    //获取
-        //    return $this->file_cache();
-        //}
      }
     /**
      * [get_access_token 获取数据]
@@ -147,11 +148,6 @@ class AccessToken{
      */
     protected function get_access_token($appid)
     {
-
-
-        //'pattern'=>'tradition',//third 第三方  tradition 传统模式
-        $this->config['pattern'];
-
 
         $url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=".$this->config['appid']."&secret=".$this->config['appsecret'];
         $res = func::http_request($url);
