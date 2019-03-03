@@ -85,7 +85,7 @@ class Open
         {
             case "component_verify_ticket":
                 $ComponentVerifyTicket = trim($result['postObj']['ComponentVerifyTicket']);
-                self::$Redis->set(self::$Config['appid'].'_ComponentVerifyTicket',$ComponentVerifyTicket);
+                self::$Redis->set(self::$Config['prefix'].self::$Config['appid'].'_ComponentVerifyTicket',$ComponentVerifyTicket);
                 $result['result'] = self::component_access_token();
                 break;
             case "unauthorized"://取消授权
@@ -169,8 +169,8 @@ class Open
      */
     public static function component_access_token()
     {
-        $result = self::$Redis->get(self::$Config['appid'].'_component_access_token');
-        $ComponentVerifyTicket = self::$Redis->get(self::$Config['appid'].'_ComponentVerifyTicket');
+        $result = self::$Redis->get(self::$Config['prefix'].self::$Config['appid'].'_component_access_token');
+        $ComponentVerifyTicket = self::$Redis->get(self::$Config['prefix'].self::$Config['appid'].'_ComponentVerifyTicket');
 
         if(empty($result)){
             $url = 'https://api.weixin.qq.com/cgi-bin/component/api_component_token';
@@ -186,7 +186,7 @@ class Open
                 throw new \Exception($result);
             }
 
-            self::$Redis->set(self::$Config['appid'].'_component_access_token',$result,7100);
+            self::$Redis->set(self::$Config['prefix'].self::$Config['appid'].'_component_access_token',$result,7100);
         }
         return json_decode($result,true);
     }
@@ -221,7 +221,7 @@ class Open
          * 判断是否缓存
          */
         if($cache){
-            $pre_auth_code = self::$Redis->get(self::$Config['appid'].'_'.$id.'_pre_auth_code');
+            $pre_auth_code = self::$Redis->get(self::$Config['prefix'].self::$Config['appid'].'_'.$id.'_pre_auth_code');
             if(!empty($pre_auth_code)){
                 $url = 'https://api.weixin.qq.com/cgi-bin/component/api_create_preauthcode?component_access_token='.self::component_access_token()['component_access_token'];
                 $postData = [
@@ -232,7 +232,7 @@ class Open
                 if(isset($resultJson['errcode'])){
                     throw new \Exception($pre_auth_code_json);
                 }
-                self::$Redis->set(self::$Config['appid'].'_'.$id.'_pre_auth_code',$pre_auth_code,1740);
+                self::$Redis->set(self::$Config['prefix'].self::$Config['appid'].'_'.$id.'_pre_auth_code',$pre_auth_code,1740);
             }
         }else{
 
@@ -291,7 +291,7 @@ class Open
      */
     public static function authorizer_access_token($authorizerAppid,$authorizerRefreshToken,$restart=true)
     {
-        $result = self::$Redis->get($authorizerAppid.'_authorizer_access_token');
+        $result = self::$Redis->get(self::$Config['prefix'].$authorizerAppid.'_authorizer_access_token');
 
         if(empty($result) || $restart){
 
@@ -306,7 +306,7 @@ class Open
             if(isset($result['errcode'])){
                 throw new \Exception(json_encode($authorization));
             }
-            self::$Redis->set($authorizerAppid.'_authorizer_access_token',$authorization,7100);
+            self::$Redis->set(self::$Config['prefix'].$authorizerAppid.'_authorizer_access_token',$authorization,7100);
             return $result;
         }
         return json_decode($result,true);
@@ -471,7 +471,7 @@ class Open
      */
     public static function jsapi_ticket($authorizerAppid,$authorizerRefreshToken)
     {
-        $result = self::$Redis->get($authorizerAppid.'_jsapi_ticket');
+        $result = self::$Redis->get(self::$Config['prefix'].$authorizerAppid.'_jsapi_ticket');
         if(!empty($result)){
             $url = 'https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token='.self::authorizer_access_token($authorizerAppid,$authorizerRefreshToken)['authorizer_access_token'].'&type=jsapi';
             $resultJson = Func::http_request($url);
@@ -480,7 +480,7 @@ class Open
             if($resultArr['errmsg'] != 'ok'){
                 throw new \Exception($resultJson);
             }
-            self::$Redis->set($authorizerAppid.'_jsapi_ticket',$resultJson,7100);
+            self::$Redis->set(self::$Config['prefix'].$authorizerAppid.'_jsapi_ticket',$resultJson,7100);
             return $resultArr;
         }
         return json_decode($result,true);

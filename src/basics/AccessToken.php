@@ -19,9 +19,16 @@ use utils\wx\common\WechatBase;
  */
 class AccessToken{
 
-     protected $config = '';//配置信息
-     protected $site_file = '../runtime/cache/access_token.json';
-     protected $redis = '';//redis
+    /**
+     * 配置信息
+     * @var array|null
+     */
+     protected $config = [];//配置信息
+    /**
+     * redis对象
+     * @var null
+     */
+     protected $redis = null;//redis
      protected $access_token = '';//access_token
      protected $expires_time = 3600;//expires_time
 
@@ -41,77 +48,6 @@ class AccessToken{
           * 初始化redis缓存
           */
          $this->redis = $redis;
-     }
-     /**
-      * [redis redis缓存]
-      * @Effect
-      * @return [type] [description]
-      */
-     protected function redis_cache()
-     {
-         $RedisModel = new RedisModel();
-         $this->redis = $RedisModel->redis;
-//        $redis = new \Redis();
-//        $redis->connect($this->config['host'], $this->config['port'],1);
-//        if(!empty($this->config['password'])){
-//            $redis->auth($this->config['password']);//登录验证密码，返回【true | false】
-//        }
-//
-//        $redis->select($this->config['select']);
-//        $this->redis = $redis;
-         //获取判断
-        $this->access_token = $this->redis->get($this->config['type']);
-
-//        var_dump($this->redis->ttl($this->config['type']));
-
-         if(!$this->access_token){
-             //获取
-             if(!$this->get_access_token()){
-                 return false;
-             }
-             //存储
-             $this->redis->set($this->config['type'],$this->access_token['access_token']);
-
-             $this->redis->expire($this->config['type'],$this->access_token['expires_in']);
-             return $this->access_token['access_token'];
-         }
-        return $this->access_token;
-
-     }
-
-     /**
-      * [ file缓存]
-      * @Effect
-      * @return [type] [description]
-      */
-     protected function file_cache()
-     {
-        //读取文件
-        $res = file_get_contents($this->site_file);        
-        $this->access_token = json_decode($res, true);
-        //如果不存在  比如从redis 切换到file
-        if(!isset($this->access_token['expires_time'])){
-            if(!$this->get_access_token()){
-                return false;
-            }
-            // expires_time 创建时间
-            // expires_in 有效期时间
-            file_put_contents(
-                $this->site_file, '{"access_token": "'.$this->access_token['access_token'].'", "expires_time": '.time().',"expires_in": '.$this->access_token['expires_in'].'}'
-                );
-
-        }else if(time() > ($this->access_token['expires_time'] + $this->access_token['expires_in'])){
-            if(!$this->get_access_token()){
-                return false;
-            }
-            // expires_time 创建时间
-            // expires_in 有效期时间
-            file_put_contents(
-                $this->site_file, '{"access_token": "'.$this->access_token['access_token'].'", "expires_time": '.time().',"expires_in": '.$this->access_token['expires_in'].'}'
-                );
-        }
-
-        return $this->access_token['access_token'];
      }
 
     /**
