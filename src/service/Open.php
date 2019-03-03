@@ -273,18 +273,28 @@ class Open
     }
 
     /**
-     * 刷新authorizer_access_token
+     * @Author pizepei
+     * @Created 2019/3/3 13:25
+     *
      * @param $authorizerAppid
      * @param $authorizerRefreshToken
+     * @param $restart
      * @return mixed
      * @throws \Exception
+     *
+     * @title  获取授权方authorizer_access_token
+     * @explain $restartw 为false时强制获取
+     * @authTiny 微权限提供权限分配 [获取店铺所有  获取所有店铺  获取一个]
+     * @authGroup 权限分组对应文件头部 @authGroup
+     *
+     * @router 方法路由一般控制器只适应(get /user/:user_id[int] ))
      */
-    public static function authorizer_access_token($authorizerAppid,$authorizerRefreshToken)
+    public static function authorizer_access_token($authorizerAppid,$authorizerRefreshToken,$restart=true)
     {
-
         $result = self::$Redis->get($authorizerAppid.'_authorizer_access_token');
 
-        if(empty($result)){
+        if(empty($result) || $restart){
+
             $postData = [
                 "component_appid"=>self::$Config['appid'],
                 "authorizer_appid"=>$authorizerAppid,
@@ -297,6 +307,7 @@ class Open
                 throw new \Exception(json_encode($authorization));
             }
             self::$Redis->set($authorizerAppid.'_authorizer_access_token',$authorization,7100);
+            return $result;
         }
         return json_decode($result,true);
 

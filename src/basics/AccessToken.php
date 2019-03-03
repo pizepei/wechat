@@ -114,13 +114,20 @@ class AccessToken{
         return $this->access_token['access_token'];
      }
 
-     /**
-      * [access_token 获取]
-      * @Effect
-      * @return [type] [description]
-      * @throws \Exception
-      */
-     public function access_token($authorizerAppid = null,$authorizerRefreshToken = null){
+    /**
+     * @Author pizepei
+     * @Created 2019/3/3 13:23
+     *
+     * @param null $authorizerAppid
+     * @param null $authorizerRefreshToken
+     * @param bool $restart
+     * @return string
+     * @throws \Exception
+     *
+     * @title  access_token 获取
+     * @explain 根据配置文件判断模式，$restart=false 时强制获取
+     */
+     public function access_token($authorizerAppid = null,$authorizerRefreshToken = null,$restart=true){
 
         /**
         * 判断是否是第三方开发模式
@@ -129,7 +136,7 @@ class AccessToken{
         if($this->config['pattern'] === 'third')
         {
             Open::init($this->config,$this->redis);
-            $this->access_token = Open::authorizer_access_token($authorizerAppid,$authorizerRefreshToken)['authorizer_access_token'];
+            $this->access_token = Open::authorizer_access_token($authorizerAppid,$authorizerRefreshToken,$restart)['authorizer_access_token'];
         }
         else if($this->config['pattern'] === 'tradition')
         {
@@ -142,19 +149,24 @@ class AccessToken{
      * @Effect
      * @param  [type] $url  [description]
      * @param  [type] $data [description]
+     * @param  [type] $restart [description]
      * @return [type]       [description]
      */
-    protected function tradition_access_token()
+    protected function tradition_access_token($restart=false)
     {
 
-        $this->redis->get($this->config['prefix'].'access_token'.$this->config['appid']);
-
-        $url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=".$this->config['appid']."&secret=".$this->config['appsecret'];
-        $res = Func::http_request($url);
-        $access_token = json_decode($res, true);
-        if(isset($access_token['errcode'])){
-            throw new Exception($access_token['errmsg']);
+        $data = $this->redis->get($this->config['prefix'].'access_token_'.$this->config['appid']);
+        if(empty($data) && $restart){
+            $url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=".$this->config['appid']."&secret=".$this->config['appsecret'];
+            $res = Func::http_request($url);
+            $access_token = json_decode($res, true);
+            if(isset($access_token['errcode'])){
+                throw new Exception($access_token['errmsg']);
+            }
+            $this->redis->set($this->config['prefix'].'access_token_'.$this->config['appid'],$access_token['access_token'],7100);
+        }else{
+            $this->access_token = $data;
         }
-        return $this->access_token  =$access_token['access_token'];
+        return $this->access_token  = $access_token['access_token'];
      }
  }
