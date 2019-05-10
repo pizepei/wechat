@@ -15,7 +15,6 @@
         "pizepei/config-ng": "dev-master",
         "pizepei/func": "dev-master"
     },
-
     "autoload": {
         "psr-4": {
             "pizepei\\wechat\\": "src/"
