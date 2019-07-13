@@ -22,6 +22,7 @@ use model\archives\ThirdCardModel;
 use model\wechat\ChatBaseConfigModel;
 use model\wechat\KeywordLogModel;
 use model\wechat\WechaErrorModel;
+use pizepei\wechat\service\Config;
 use service\BasicsPort\WeChat;
 use utils\wechatbrief\func;
 use model\wechat\KeywordModel;
@@ -32,6 +33,7 @@ use utils\wx\event\EventLogic;
 
 class ReplyApi
 {
+    const  namespace = 'pizepei\wechat\module\\';
 
     private $postObj;//接受管理的xml对象
 
@@ -107,93 +109,7 @@ class ReplyApi
     //时间戳
     private $timeStamp = null;
 
-    /**
-     * 关键字数据(系统级别)
-     */
-    const sys_keyword = [
-        'SCAN_qrcode_EventKey'=>[
-            'title'       => '二维码事件',          //规则名称
-            'name'        => 'SCAN_qrcode_EventKey',          //关键字
-            'matchType'   => '10',                //10全匹配,20模糊匹配
-            'model'       => 'Qrcode',          //模型名称（模块）
-            'method'      => 'index',          //模型方法名称
-            'type'        => 'text',          //回复类型
-            'status'      => '10',                //是否生效 10生效 20不生效
-            'content'     => '',                //回复内容
-        ],
-        'Event_poi_check_notify'=>[
-            'title'       => '门店审核',          //规则名称
-            'name'        => 'Event_poi_check_notify',          //关键字
-            'matchType'   => '10',                //10全匹配,20模糊匹配
-            'model'       => 'Store',          //模型名称（模块）
-            'method'      => 'index',          //模型方法名称
-            'type'        => 'text',          //回复类型
-            'status'      => '10',                //是否生效 10生效 20不生效
-            'content'     => '1111',                //回复内容
-        ],
 
-        'Kf'=>[
-            'title'       => '客服',          //规则名称
-            'name'        => 'Kf',          //关键字
-            'matchType'   => '10',                //10全匹配,20模糊匹配
-            'model'       => 'chat',          //模型名称（模块）
-            'method'      => 'ascertainv',          //模型方法名称
-            'type'        => 'text',          //回复类型
-            'status'      => '10',                //是否生效 10生效 20不生效
-            'content'     => '',                //回复内容
-        ],
-        'KF'=>[
-            'title'       => '客服',          //规则名称
-            'name'        => 'KF',          //关键字
-            'matchType'   => '10',                //10全匹配,20模糊匹配
-            'model'       => 'chat',          //模型名称（模块）
-            'method'      => 'ascertainv',          //模型方法名称
-            'type'        => 'text',          //回复类型
-            'status'      => '10',                //是否生效 10生效 20不生效
-            'content'     => '',                //回复内容
-        ],
-        'kf'=>[
-            'title'       => '客服',          //规则名称
-            'name'        => 'kf',          //关键字
-            'matchType'   => '10',                //10全匹配,20模糊匹配
-            'model'       => 'chat',          //模型名称（模块）
-            'method'      => 'ascertainv',          //模型方法名称
-            'type'        => 'text',          //回复类型
-            'status'      => '10',                //是否生效 10生效 20不生效
-            'content'     => '',                //回复内容
-        ],
-        'Q'=>[
-            'title'       => '客服',          //规则名称
-            'name'        => 'Q',          //关键字
-            'matchType'   => '10',                //10全匹配,20模糊匹配
-            'model'       => 'chat',          //模型名称（模块）
-            'method'      => 'finishCaht',          //模型方法名称
-            'type'        => 'text',          //回复类型
-            'status'      => '10',                //是否生效 10生效 20不生效
-            'content'     => '',                //回复内容
-        ],
-        'q'=>[
-            'title'       => '客服',          //规则名称
-            'name'        => 'Q',          //关键字
-            'matchType'   => '10',                //10全匹配,20模糊匹配
-            'model'       => 'chat',          //模型名称（模块）
-            'method'      => 'finishCaht',          //模型方法名称
-            'type'        => 'text',          //回复类型
-            'status'      => '10',                //是否生效 10生效 20不生效
-            'content'     => '',                //回复内容
-        ],
-        'openid'=>[
-            'title'       => '获取openid',          //规则名称
-            'name'        => 'openid',          //关键字
-            'matchType'   => '10',                //10全匹配,20模糊匹配
-            'model'       => 'keyword',          //模型名称（模块）
-            'method'      => 'getOpenid',          //模型方法名称
-            'type'        => 'text',          //回复类型
-            'status'      => '10',                //是否生效 10生效 20不生效
-            'content'     => '',                //回复内容
-        ],
-
-    ];
 
     //关键字名字
     private $reply_name = '';
@@ -205,44 +121,6 @@ class ReplyApi
     private $reply_content = '';
     //需要回复的消息类型
     private $reply_type = '';
-
-    //----------------回复信息需要的 成员属性---------------------------------------
-
-    //text 文字  image 图片  news 图文模板
-    //信息  模板  array
-    private $template_xml = [
-        'text' => '<xml>
-        <ToUserName><![CDATA[%s]]></ToUserName>
-        <FromUserName><![CDATA[%s]]></FromUserName>
-        <CreateTime>%s</CreateTime>
-        <MsgType><![CDATA[%s]]></MsgType>
-        <Content><![CDATA[%s]]></Content>
-        <FuncFlag>0</FuncFlag>
-        </xml>',
-
-        'image' => '<xml>
-        <ToUserName><![CDATA[%s]]></ToUserName>
-        <FromUserName><![CDATA[%s]]></FromUserName>
-        <CreateTime>%s</CreateTime>
-        <MsgType><![CDATA[%s]]></MsgType>
-        <Image>
-        <MediaId><![CDATA[%s]]></MediaId>
-        </Image>
-        </xml>',
-
-        'news' => '<xml>
-        <ToUserName><![CDATA[%s]]></ToUserName>
-        <FromUserName><![CDATA[%s]]></FromUserName>
-        <CreateTime>%s</CreateTime>
-        <MsgType><![CDATA[%s]]></MsgType>
-        <ArticleCount>%s</ArticleCount>
-            <Articles>
-                {$item}
-            </Articles>
-        </xml>',
-
-    ];
-
     //提取的关键字
     private $keyword;
 
@@ -254,85 +132,36 @@ class ReplyApi
     //没有关注的的扫描二维码事件
     public $qrscene_ = '';
 
-    function __construct($get = null, $config = null)
+    function __construct($get, $config,$appid)
     {
-
-
+        $this->config = $config;
         //消息接口token验证
-        $SHALApi = new SHALApi($get);
+        $SHALApi = new SHALApi($get,$this->config['token']);
         $SHALApi->control();
         //获取post变量
-        // $this->postObj = $GLOBALS["HTTP_RAW_POST_DATA"];
         $this->postObj = file_get_contents("php://input");
-        if($config == null){
-            //没有  定义自定义配置使用系统定义配置
-            $this->config = \Config::WECHAT_CONFIG;
-
-
-        }else{
-            //有自定义配置
-            $this->config = $config;
-        }
-        //WechaErrorModel
-
-        WechaErrorModel::open()->add(['name'=>'config','log'=>json_encode($this->config),'request'=>$this->postObj]);
         //对信息进行解密
-        if(isset($get['encrypt_type']) && $this->config['encodingAesKey'] != ''){
+        if(isset($get['encrypt_type']) && $this->config['EncodingAESKey'] != ''){
 
             if($get['encrypt_type'] == 'aes'){
 
                 $this->encrypt_type = $get['encrypt_type'];
                 //实例化 加解密
-                $WXBizMsgCrypt       = new WXBizMsgCrypt($this->config['token'], $this->config['encodingAesKey'], $this->config['appid']);
+                $WXBizMsgCrypt       = new WXBizMsgCrypt($this->config['token'], $this->config['EncodingAESKey'], $this->config['authorizer_appid']);
                 $this->WXBizMsgCrypt = $WXBizMsgCrypt;
 
                 $this->timeStamp = $get['timestamp'];
                 $this->nonce     = $get['nonce'];
-
                 $msg = '';
                 $WXBizMsgCrypt->decryptMsg($get['msg_signature'], $get['timestamp'], $get['nonce'], $this->postObj, $msg);
                 $this->postObj = $msg;
-
             }
         }
-
-        //       Logger::logToTable('event_'.Sundry::randomStr(6),[json_encode($this->postObj)],true);
         //xml_todj()获取 xml并且 初始化 接收的成员属性
         //template_xml() 初始化 信息面板 成员属性
         $this->xml_todj();
-        $isCardEvent = false;
-
-        try{
-            $this->eventByCard();
-            $isCardEvent = true;
-        }catch(\Exception $e){
-
-        }
-        if(!$isCardEvent){
-            WechaErrorModel::open()->add(['name'=>'content_type','log'=>json_encode($this->postObj),'request'=>$this->postObj]);
-            $this->content_type();//提取关键字
-            if(\Config::WX_EVENT_FALLBACK_URL){
-                $this->proxyMessage(\Config::WX_EVENT_FALLBACK_URL);
-            }
-        }
+        $this->content_type();//提取关键字进行操作
     }
-
-    protected function proxyMessage($url)
-    {
-        $ci = curl_init();
-        curl_setopt_array($ci, [
-            CURLOPT_TIMEOUT         => 5,
-            CURLOPT_HTTPHEADER      => [],
-            CURLOPT_HEADER          => 0,        // 1:获取头部信息
-            CURLOPT_RETURNTRANSFER  => 1,        // 1:不直接输出
-            CURLOPT_POSTFIELDS      => $this->postObj,    // post数据
-            CURLOPT_URL             => $url.'?'.$_SERVER['QUERY_STRING'],
-            CURLOPT_CUSTOMREQUEST   => $_SERVER['REQUEST_METHOD'],
-            CURLOPT_ACCEPT_ENCODING => 'gzip',
-        ]);
-        curl_exec($ci);
-    }
-
     /**
      * 魔术方法
      *
@@ -348,31 +177,6 @@ class ReplyApi
 
         return null;
     }
-
-    /**
-     * 和会员卡有关的消息处理
-     */
-    private function eventByCard()
-    {
-        $input = json_decode(json_encode($this->postObj), true);
-        if(isset($input['CardId']) && isset($input['MsgType']) && $input['MsgType'] == 'event' && WxEventEnum::keyExist($input['Event'])){
-            $thirdCardInfo = ThirdCardModel::open()->equalsMulti([
-                'thirdCardId' => $input['CardId'],
-                'type'        => 'wechat',
-            ])->first();
-
-            if(empty($thirdCardInfo)){
-                throw new \Exception('Noting to do');
-            }
-
-            $eventLogic = new EventLogic($input['Event'], $input);
-            $eventLogic->callFunc('act');
-
-        }else{
-            throw new \Exception('Nothing to do');
-        }
-    }
-
 
     /**
      * [xml_todj 获取 xml 对象]
@@ -425,23 +229,15 @@ class ReplyApi
 
                 $this->msg = $postObj->msg;
 
-
             }else{
-                //写入错误日志 mt_rand(0,500)
-                file_put_contents('../utils/wechatbrief/Module/Cache/ReplyApi_log'.date('ymd_h').'.txt',
-                    '['.date('y_m_d H').json_encode($this->postObj).']\n', FILE_APPEND);
-                exit('非法请求');
+                throw new \Exception('postObj null');
             }
-
-
             //返回
             return true;
         }
     }
-
     /**
      * [content_type 提取关键字 判断信息类型 处理内容]
-     *
      * @Effect
      * @return [type] [description]
      */
@@ -613,22 +409,29 @@ class ReplyApi
      */
     function keyword_trigger($content = '', $type = 'text')
     {
-
-        WechaErrorModel::open()->add(['name'=>'keyword_trigger','log'=>json_encode(['content'=>$content,'type'=>$type]),'request'=>$this->postObj]);
-
         $this->reply_type = $type;
-
         //获取关键字
         if(empty($content)){
             //            获取关键字
             $sql_keyword = $this->Content;
-            //file_put_contents('sql_keyword.txt',$sql_keyword);
+            //查询关键字
+            if(isset(BasicsConst::sys_keyword[$sql_keyword])){
+                //系统关键字
+                $result = BasicsConst::sys_keyword[$sql_keyword];
+            }else{
+                //从数据库查询关键字
+                $result = KeywordModel::getKeyword($sql_keyword);
+            }
+
+
+
+
 
             // 判断数据库存储类型
             if($this->config['cache_keyword_type'] == 'mysql'){
                 //查询关键字
-                if(isset(self::sys_keyword[$sql_keyword])){
-                    $result = self::sys_keyword[$sql_keyword];
+                if(isset(BasicsConst::sys_keyword[$sql_keyword])){
+                    $result = BasicsConst::sys_keyword[$sql_keyword];
                 }else{
                     $result = KeywordModel::getKeyword($sql_keyword);
                 }
@@ -703,7 +506,7 @@ class ReplyApi
             $this->reply_content = $content;
         }
         //匹配回复   信息模板
-        $this->template_Type = $this->template_xml[$this->reply_type];
+        $this->template_Type = BasicsConst::template_xml[$this->reply_type];
         /**
          * 这里设置检查   模块类是否存在
          * 不存在  写入日志
@@ -714,9 +517,10 @@ class ReplyApi
             exit();
         }
         //声明模块类
-        $new1 = '\utils\wechatbrief\Module\\'.ucfirst($this->reply_model).'\\'.ucfirst($this->reply_model).'Module';
-        //file_put_contents('aModule.txt',json_encode($new1));
-
+        $new1 = self::namespace.lcfirst($this->reply_model).'\\'.ucfirst($this->reply_model).'Module';
+        /**
+         * 实例化
+         */
         $new = new $new1;
         //回复信息      =   调用$method（）模块中的方法 处理返回的 完整xml内容  echo 到微信
         $method   = $this->reply_method;

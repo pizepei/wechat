@@ -4,6 +4,7 @@
  * @Date:   2017-07-12 14:39:36
  * @Last Modified by:   pizepei
  * @Last Modified time: 2018-06-28 16:34:13
+ * @title 开放平台配置
  */
 namespace pizepei\wechat\model;
 
@@ -46,6 +47,12 @@ class OpenWechatConfigModel extends Model
         ],
         'cache_time'=>[
             'TYPE'=>'int(10)', 'DEFAULT'=>120, 'COMMENT'=>'缓存时间单位s',
+        ],
+        'cache_prefix'=>[
+            'TYPE'=>'varchar(43)', 'DEFAULT'=>'wechat:open:', 'COMMENT'=>'获取prefix',
+        ],
+        'transpond_url'=>[
+            'TYPE'=>'varchar(150)', 'DEFAULT'=>'wechat:open:', 'COMMENT'=>'转发地址',
         ],
         'status'=>[
             'TYPE'=>"ENUM('1','2','3','4')", 'DEFAULT'=>'1', 'COMMENT'=>'状态1、停用2、启用3、异常',

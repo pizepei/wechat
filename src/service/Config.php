@@ -10,6 +10,7 @@
 namespace pizepei\wechat\service;
 
 
+use pizepei\wechat\model\OpenAuthorizerUserInfoModel;
 use pizepei\wechat\model\OpenWechatConfigModel;
 
 class Config
@@ -29,9 +30,7 @@ class Config
      */
     public function __construct(\Redis $redis)
     {
-
-
-
+        $this->redis = $redis;
     }
 
     /**
@@ -55,14 +54,38 @@ class Config
 
     }
     /**
+     * 缓存时间单位s
+     */
+    const Alone_cache_time = 120;
+    /**
+     * 缓存prefix
+     */
+    const Alone_cache_prefix = 'wechat:Alone:Config:';
+
+    /**
      * 获取开发模式微信公众号配置
      * @param bool $cache
      */
-    public function getAloneConfig($cache=true,$appid='')
+    public function getAloneConfig($cache=false,$appid)
     {
         /**
          * 判断是否需要缓存
          */
+        if ($cache){
+            $config = $this->redis->get(self::Alone_cache_prefix.$appid);
+            $config = json_decode($config,true);
+        }
+        if (isset($config) && !empty($config)){
+            return $config;
+        }
+        /**
+         * 没有获取
+         */
+        $config = OpenAuthorizerUserInfoModel::table()->where(['authorizer_appid'=>$appid])->fetch();
+        if ($cache && !empty($config)){
+            $this->redis->set(self::Alone_cache_prefix.$appid,json_encode($config),self::Alone_cache_time);
+        }
+        return $config;
     }
 
 }

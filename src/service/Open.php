@@ -10,6 +10,7 @@
 
 namespace pizepei\wechat\service;
 
+use pizepei\wechat\model\OpenAuthorizerUserInfoModel;
 use pizepei\wechat\basics\Func;
 use pizepei\wechat\basics\Prpcrypt;
 use pizepei\wechat\basics\SHA1;
@@ -60,7 +61,57 @@ class Open
             self::$Redis = $Redis;
         }
     }
+    /**
+     * @Author 皮泽培
+     * @Created 2019/7/13 11:59
+     * @title  设置授权信息
+     * @explain 设置授权信息 包括 修改授权、先增授权、权限授权
+     * @authGroup basics.menu.getMenu:权限分组1,basics.index.menu:权限分组2
+     */
+    public static function setAuthorized(&$result,$InfoType)
+    {
+        $OpenAuthorizer = OpenAuthorizerUserInfoModel::table();
+        /**
+         * 判断是否已经有授权数据防止写入重复数据重新错误
+         */
+        $OpenAuthorizerData = $OpenAuthorizer->where(
+            [
+                'authorizer_appid'=>$result['postObj']['AuthorizerAppid'],
+            ]
+        )->fetch();
+        /**
+         * 通过授权代码获取授权公众号的基本授权信息(所有)
+         * authorized 增加授权   updateauthorized 更新授权
+         */
+        if ($InfoType == 'authorized' ||$InfoType == 'updateauthorized' ){
+            $authorizerAccessInfo = self::auth_code($result['postObj']['AuthorizationCode']);
+            $result['result'] = $authorizerAccessInfo;
+            if (!empty($OpenAuthorizerData) && isset($authorizerAccessInfo['authorization_info'])){
+                $authorizerAccessInfo['id'] = $OpenAuthorizerData['id'];
+                $authorizerAccessInfo['status'] = 2;
+            }else if (!isset($authorizerAccessInfo['authorizer_appid'])){
+                throw new \Exception('获取 authorization_info 失败');
+            }
+        }else if ($InfoType == 'unauthorized') {//取消授权
+            $authorizerAccessInfo['id'] = $OpenAuthorizerData['id'];
+            $authorizerAccessInfo['status'] = 3;
+        }
+        $authorizerAccessInfo['component_appid'] = self::$Config['appid'];
+        return $OpenAuthorizer->insert($authorizerAccessInfo);
+    }
 
+    /**
+     * @Author 皮泽培
+     * @Created 2019/7/13 11:53
+     * @title  更新方法component_verify_ticket
+     * @explain 更新verify_ticket缓存
+     */
+    public static function  component_verify_ticket($result)
+    {
+        $ComponentVerifyTicket = trim($result['postObj']['ComponentVerifyTicket']);
+        self::$Redis->set(self::$Config['cache_prefix'].self::$Config['appid'].'_ComponentVerifyTicket',$ComponentVerifyTicket);
+        return self::component_access_token();
+    }
     /**
      * 第三方授权
      * @param $get
@@ -70,11 +121,9 @@ class Open
      */
     public static function accredit($get,$input)
     {
-
         if(empty($input)){
             throw new \Exception('xml为空');
         }
-
         $decryptionResult = self::decryption($get,$input);
         $result['postObj'] = json_decode(json_encode($decryptionResult['object']), true);
 
@@ -84,32 +133,30 @@ class Open
         switch ($result['postObj']['InfoType'])
         {
             case "component_verify_ticket":
-                $ComponentVerifyTicket = trim($result['postObj']['ComponentVerifyTicket']);
-                self::$Redis->set(self::$Config['prefix'].self::$Config['appid'].'_ComponentVerifyTicket',$ComponentVerifyTicket);
-                $result['result'] = self::component_access_token();
+                /**
+                 * component_verify_ticket更新
+                 */
+                $result['result'] = self::component_verify_ticket($result);
                 break;
             case "unauthorized"://取消授权
-
+                self::setAuthorized($result,$result['postObj']['InfoType']);
                 break;
 
             case "authorized"://授权
                 /**
                  * 通过授权代码获取授权公众号的基本授权信息(所有)
                  */
-                $result['authorizerAccessInfo'] = self::auth_code($result['postObj']['AuthorizationCode']);
+                self::setAuthorized($result,$result['postObj']['InfoType']);
                 break;
             case "updateauthorized"://修改权限
                 /**
                  * 通过授权代码获取授权公众号的基本授权信息(所有)
                  */
-                $result['authorizerAccessInfo'] = self::auth_code($result['postObj']['AuthorizationCode']);
+                self::setAuthorized($result,$result['postObj']['InfoType']);
                 break;
-
             default:
-
                 break;
         }
-
         return $result;
 
     }
@@ -117,10 +164,8 @@ class Open
     /**
      * @Author pizepei
      * @Created 2019/3/2 15:20
-     *
      * @param $auth_code
-     *
-     * @title  方法标题（一般是方法的简称）
+     * @title  通过auth_code获取授权事件信息
      * @explain 一般是方法功能说明、逻辑说明、注意事项等。
      */
     public static function auth_code($auth_code){
@@ -138,7 +183,6 @@ class Open
          * 合并数据
          */
         $authorizerAccessInfoData['PreAuthCode'] = $auth_code;
-
 
         $authorizerAccessInfoData['nick_name'] = $authorizerInfo['authorizer_info']['nick_name'];
         $authorizerAccessInfoData['head_img'] = $authorizerInfo['authorizer_info']['head_img'];
@@ -158,10 +202,6 @@ class Open
         return $authorizerAccessInfoData;
 
     }
-
-
-
-
     /**
      * 获取 component_access_token
      * @return mixed
@@ -169,8 +209,8 @@ class Open
      */
     public static function component_access_token()
     {
-        $result = self::$Redis->get(self::$Config['prefix'].self::$Config['appid'].'_component_access_token');
-        $ComponentVerifyTicket = self::$Redis->get(self::$Config['prefix'].self::$Config['appid'].'_ComponentVerifyTicket');
+        $result = self::$Redis->get(self::$Config['cache_prefix'].self::$Config['appid'].'_component_access_token');
+        $ComponentVerifyTicket = self::$Redis->get(self::$Config['cache_prefix'].self::$Config['appid'].'_ComponentVerifyTicket');
 
         if(empty($result)){
             $url = 'https://api.weixin.qq.com/cgi-bin/component/api_component_token';
@@ -186,11 +226,10 @@ class Open
                 throw new \Exception($result);
             }
 
-            self::$Redis->set(self::$Config['prefix'].self::$Config['appid'].'_component_access_token',$result,7100);
+            self::$Redis->set(self::$Config['cache_prefix'].self::$Config['appid'].'_component_access_token',$result,7100);
         }
         return json_decode($result,true);
     }
-
     /**
      * 获取授权连接
      * @param null   $id
@@ -215,13 +254,13 @@ class Open
      * @return mixed
      * @throws \Exception
      */
-    public static function pre_auth_code($id,$cache=false)
+    public static function pre_auth_code($id='',$cache=false)
     {
         /**
          * 判断是否缓存
          */
         if($cache){
-            $pre_auth_code = self::$Redis->get(self::$Config['prefix'].self::$Config['appid'].'_'.$id.'_pre_auth_code');
+            $pre_auth_code = self::$Redis->get(self::$Config['cache_prefix'].self::$Config['appid'].'_'.$id.'_pre_auth_code');
             if(!empty($pre_auth_code)){
                 $url = 'https://api.weixin.qq.com/cgi-bin/component/api_create_preauthcode?component_access_token='.self::component_access_token()['component_access_token'];
                 $postData = [
@@ -232,7 +271,7 @@ class Open
                 if(isset($resultJson['errcode'])){
                     throw new \Exception($pre_auth_code_json);
                 }
-                self::$Redis->set(self::$Config['prefix'].self::$Config['appid'].'_'.$id.'_pre_auth_code',$pre_auth_code,1740);
+                self::$Redis->set(self::$Config['cache_prefix'].self::$Config['appid'].'_'.$id.'_pre_auth_code',$pre_auth_code,1740);
             }
         }else{
 
@@ -288,7 +327,7 @@ class Open
      */
     public static function authorizer_access_token($authorizerAppid,$authorizerRefreshToken,$restart=false)
     {
-        $result = self::$Redis->get(self::$Config['prefix'].$authorizerAppid.'_authorizer_access_token');
+        $result = self::$Redis->get(self::$Config['cache_prefix'].$authorizerAppid.'_authorizer_access_token');
 
         if(empty($result) || $restart){
             $postData = [
@@ -302,7 +341,7 @@ class Open
             if(isset($result['errcode'])){
                 throw new \Exception(json_encode($authorization));
             }
-            self::$Redis->set(self::$Config['prefix'].$authorizerAppid.'_authorizer_access_token',$authorization,7100);
+            self::$Redis->set(self::$Config['cache_prefix'].$authorizerAppid.'_authorizer_access_token',$authorization,7100);
             return $result;
         }
         return json_decode($result,true);
@@ -387,7 +426,7 @@ class Open
     {
         //file_put_contents('get',json_encode($get));
         //file_put_contents('input',$input);
-        $WXBizMsgCrypt       = new WXBizMsgCrypt(self::$Config['token'], self::$Config['encodingAesKey'],self::$Config['appid']);
+        $WXBizMsgCrypt       = new WXBizMsgCrypt(self::$Config['token'], self::$Config['EncodingAESKey'],self::$Config['appid']);
         $WXBizMsgCrypt->decryptMsg($get['msg_signature'], $get['timestamp'], $get['nonce'], $input, $msg);
 
         libxml_disable_entity_loader(true);
@@ -467,7 +506,7 @@ class Open
      */
     public static function jsapi_ticket($authorizerAppid,$authorizerRefreshToken)
     {
-        $result = self::$Redis->get(self::$Config['prefix'].$authorizerAppid.'_jsapi_ticket');
+        $result = self::$Redis->get(self::$Config['cache_prefix'].$authorizerAppid.'_jsapi_ticket');
         if(!empty($result)){
             $url = 'https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token='.self::authorizer_access_token($authorizerAppid,$authorizerRefreshToken)['authorizer_access_token'].'&type=jsapi';
             $resultJson = Func::http_request($url);
@@ -476,7 +515,7 @@ class Open
             if($resultArr['errmsg'] != 'ok'){
                 throw new \Exception($resultJson);
             }
-            self::$Redis->set(self::$Config['prefix'].$authorizerAppid.'_jsapi_ticket',$resultJson,7100);
+            self::$Redis->set(self::$Config['cache_prefix'].$authorizerAppid.'_jsapi_ticket',$resultJson,7100);
             return $resultArr;
         }
         return json_decode($result,true);

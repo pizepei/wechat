@@ -27,14 +27,10 @@ class SHALApi{
     private $status = false; //是否验证状态
 
     //构造函数 为 基本参数 赋 值
-   function __construct($get,$token=null)
+   function __construct($get,$token)
    {
-
-       if(!$token){
-           $token = \Config::WECHAT_CONFIG['token'];
-       }
         //判断是否是$token验证
-       if(isset($get['timestamp']) && isset($get['timestamp']) && $get['signature'] && $get['echostr']){
+       if(isset($get['timestamp']) && isset($get['timestamp']) && isset($get['signature']) && isset($get['echostr'])){
            $this->token = $token;
            $this->timestamp = $get['timestamp'];
            $this->nonce = $get['nonce'];
@@ -63,7 +59,7 @@ class SHALApi{
                }
                return $this->echostr;
            }else{
-               exit('非法请求');
+               throw new \Exception('非法请求');
            }
 
        }
