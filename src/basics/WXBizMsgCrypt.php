@@ -27,17 +27,12 @@ class WXBizMsgCrypt
 	 * @param $encodingAesKey string 公众平台上，开发者设置的EncodingAESKey
 	 * @param $appId string 公众平台的appId
 	 */
-	public function __construct($token =null, $encodingAesKey  =null, $appId  =null)
+	public function __construct($token, $encodingAesKey, $appId)
 	{
 	    if($token && $encodingAesKey && $appId){
             $this->token = $token;
             $this->encodingAesKey = $encodingAesKey;
             $this->appId = $appId;
-        }else{
-            $Config = \Config::WECHAT_CONFIG;
-            $this->token = $Config['token'];
-            $this->encodingAesKey = $Config['encodingAesKey'];
-            $this->appId = $Config['appid'];
         }
 	}
 

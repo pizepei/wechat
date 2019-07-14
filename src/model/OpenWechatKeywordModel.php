@@ -11,7 +11,7 @@ namespace pizepei\wechat\model;
 
 use pizepei\model\db\Model;
 
-class WechatKeywordModel extends Model
+class OpenWechatKeywordModel extends Model
 {
     /**
      * 表结构
@@ -40,7 +40,7 @@ class WechatKeywordModel extends Model
             'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'模型名称（模块）',
         ],
         'method'=>[
-            'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'模型方法名称',
+            'TYPE'=>'varchar(255)', 'DEFAULT'=>'index', 'COMMENT'=>'模型方法名称',
         ],
         'type'=>[
             'TYPE'=>"ENUM('text','image','news','video','event')", 'DEFAULT'=>'text', 'COMMENT'=>'回复类型',
@@ -61,7 +61,8 @@ class WechatKeywordModel extends Model
          * FULLTEXT 文本
          */
         'INDEX'=>[
-            ['TYPE'=>'UNIQUE','FIELD'=>'name,authorizer_appid','NAME'=>'name,authorizer_appid','USING'=>'BTREE','COMMENT'=>'关键字'],
+            ['TYPE'=>'UNIQUE','FIELD'=>'name,authorizer_appid,component_appid','NAME'=>'name,authorizer_appid,component_appid','USING'=>'BTREE','COMMENT'=>'关键字'],
+            ['TYPE'=>'INDEX','FIELD'=>'status','NAME'=>'status','USING'=>'BTREE','COMMENT'=>'状态'],
         ],
         'PRIMARY'=>'id',//主键
     ];

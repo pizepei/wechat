@@ -20,8 +20,8 @@ namespace pizepei\wechat\basics;
 use enum\WxEventEnum;
 use model\archives\ThirdCardModel;
 use model\wechat\ChatBaseConfigModel;
-use model\wechat\KeywordLogModel;
 use model\wechat\WechaErrorModel;
+use pizepei\wechat\model\OpenWechatKeywordModel;
 use pizepei\wechat\service\Config;
 use service\BasicsPort\WeChat;
 use utils\wechatbrief\func;
@@ -34,6 +34,7 @@ use utils\wx\event\EventLogic;
 class ReplyApi
 {
     const  namespace = 'pizepei\wechat\module\\';
+    const  namespacePath = '..'.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'pizepei'.DIRECTORY_SEPARATOR.'wechat'.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR.'module'.DIRECTORY_SEPARATOR;
 
     private $postObj;//接受管理的xml对象
 
@@ -160,7 +161,7 @@ class ReplyApi
         //xml_todj()获取 xml并且 初始化 接收的成员属性
         //template_xml() 初始化 信息面板 成员属性
         $this->xml_todj();
-        $this->content_type();//提取关键字进行操作
+
     }
     /**
      * 魔术方法
@@ -248,9 +249,8 @@ class ReplyApi
             case 'text'://文字回复
 
                 $this->keyword = $this->Content;
-
                 //数据库关键字
-                $this->keyword_trigger();
+                $result = $this->keyword_trigger();
 
                 break;
 
@@ -258,7 +258,7 @@ class ReplyApi
 
                 $this->Content = $this->MediaId;
                 //数据库关键字
-                $this->keyword_trigger();
+                $result = $this->keyword_trigger();
 
                 break;
             case 'voice'://语音
@@ -266,7 +266,7 @@ class ReplyApi
 
                 $this->Content = $this->Recongnition;
                 $this->keyword = $this->Recongnition;
-                $this->keyword_trigger();
+                $result = $this->keyword_trigger();
 
                 //                $this->voice();
 
@@ -287,7 +287,7 @@ class ReplyApi
                         $this->Content = 'Event_poi_check_notify';
                         $poiId = $this->PoiId;
                         //数据库关键字
-                        $this->keyword_trigger();
+                        $result = $this->keyword_trigger();
                         break;
 
                     //subscribe(订阅)、unsubscribe(取消订阅)
@@ -306,13 +306,13 @@ class ReplyApi
 
                             //$this->EventKey = ltrim($this->EventKey, 'qrscene_');
                             $this->Content = 'SCAN_qrcode_EventKey';
-                            $this->keyword_trigger();
+                            $result = $this->keyword_trigger();
 
                             //$this->keyword_trigger($this->EventKey);
                         }else{
 
                             $this->Content = 'subscribe';
-                            $this->keyword_trigger();
+                            $result = $this->keyword_trigger();
                         }
 
                         break;
@@ -323,7 +323,7 @@ class ReplyApi
 
                         $this->Content = 'unsubscribe';
                         //数据库关键字
-                        $this->keyword_trigger();
+                        $result = $this->keyword_trigger();
                         break;
 
 
@@ -334,7 +334,7 @@ class ReplyApi
                         $this->Content = $this->EventKey; //todo:这里删除了拼接CLICK_
 
                         //数据库关键字
-                        $this->keyword_trigger();
+                        $result = $this->keyword_trigger();
                         //EventKey    事件KEY值，与自定义菜单接口中KEY值对应
                         break;
 
@@ -344,7 +344,7 @@ class ReplyApi
 
                         //EventKey    事件KEY值，设置的跳转URL
                         $this->Content = 'unsubscribe';
-
+                        $result = $this->keyword_trigger();
                         break;
 
                     // 扫描带参数二维码事件-------------------------用户未关注时，进行关注后的事件推送-----------------------//
@@ -378,10 +378,9 @@ class ReplyApi
                         //$this->Ticket = ltrim($this->Ticket, 'qrscene_');
                         $this->Ticket = str_replace("qrscene_","",$this->Ticket);
                         $this->Content = 'SCAN_qrcode_EventKey';
-                        $this->keyword_trigger();
+                        $result = $this->keyword_trigger();
                         // EventKey    事件KEY值，是一个32位无符号整数，即创建二维码时的二维码scene_id
                         // Ticket  二维码的ticket，可用来换取二维码图片
-
                         break;
 
                     //上报地理位置事件
@@ -390,15 +389,16 @@ class ReplyApi
                         // Longitude   地理位置经度
                         // Precision   地理位置精度
                         $this->Content = 'unsubscribe';
+                        $result = $this->keyword_trigger();
 
                         break;
-
                 };
 
                 break;
 
             default:
         }
+        return $result;
     }
 
     /**
@@ -412,90 +412,44 @@ class ReplyApi
         $this->reply_type = $type;
         //获取关键字
         if(empty($content)){
-            //            获取关键字
-            $sql_keyword = $this->Content;
+            $sql_keyword = $this->Content;//定义查询关键字
             //查询关键字
             if(isset(BasicsConst::sys_keyword[$sql_keyword])){
                 //系统关键字
                 $result = BasicsConst::sys_keyword[$sql_keyword];
             }else{
                 //从数据库查询关键字
-                $result = KeywordModel::getKeyword($sql_keyword);
-            }
-
-
-
-
-
-            // 判断数据库存储类型
-            if($this->config['cache_keyword_type'] == 'mysql'){
-                //查询关键字
-                if(isset(BasicsConst::sys_keyword[$sql_keyword])){
-                    $result = BasicsConst::sys_keyword[$sql_keyword];
-                }else{
-                    $result = KeywordModel::getKeyword($sql_keyword);
+                $result = OpenWechatKeywordModel::table()->where(
+                    [
+                    'authorizer_appid'=>$this->config['authorizer_appid'],
+                    'component_appid'=>$this->config['component_appid'],
+                    'status'=>10,
+                    ]
+                )->fetch();
+                if (empty($result)){
+                    /**
+                     * 模糊匹配
+                     * select id,name,length(name),length(replace(name,'爱','')) from `open_wechat_keyword`  where  `name` LIKE '%爱%'  order by length(replace(name,'爱',''))
+                     */
                 }
-                $logModel = KeywordLogModel::open();
-                $logModel->add([
-                    'keywordId' => $result['id'] ?? 0, //关键词ID
-                    'content'   => $sql_keyword, //接收内容
-                    'openid'    => $this->fromUsername, //发送人
-                ]);
-
-                if($result){
-                    //获取关键字 参数
-                    $this->reply_name    = $result['name'];
-                    $this->reply_model   = $result['model'];
-                    $this->reply_method  = $result['method'];
-                    $this->reply_type    = $result['type'];
-                    $this->reply_content = $result['content'];
-
-                    //部分模块不需要现在定义回复内容，数据库在无内容
-                    if(empty($this->reply_content)){
-                        $this->reply_content = '';
-                    }
-                }else{
-
-                    if(!empty(ChatBaseConfigModel::open()->equals('status',22)->first())){
-                        //不在系统关键字范围
-                        //判断是否已经存在客服会话缓存信息
-                        //$RedisModel = new BaseModel();
-                        $RedisModel = new RedisModel();
-                        if($RedisModel->get_session($this->fromUsername)){
-                            $this->reply_name    = 'name';
-                            $this->reply_model   = 'chat';
-                            $this->reply_method  = 'chat';
-                            $this->reply_content = $this->Content;
-                        }else{
-
-                            //不在会话中
-                            if($RedisModel->getAscertain($this->fromUsername) == 1){
-
-                                $this->reply_name    = 'name';
-                                $this->reply_model   = 'chat';
-                                $this->reply_method  = 'ascertainv';
-                                $this->reply_content = $this->Content;
-
-                            }else{
-                                $this->reply_name    = 'name';
-                                $this->reply_model   = 'keyword';
-                                $this->reply_method  = 'index';
-                                $this->reply_content = '回复KF进入在线客服系统。'.PHP_EOL.'回复Q退出客服系统。'.$RedisModel->getAscertain($this->fromUsername);
-
-                            }
-                        }
-                    }else{
-                        return '';
-                    }
-
+            }
+            if(isset($result['name'])){
+                //获取关键字 参数
+                $this->reply_name    = $result['name'];
+                $this->reply_model   = $result['model'];
+                $this->reply_method  = $result['method'];
+                $this->reply_type    = $result['type'];
+                $this->reply_content = $result['content'];
+                //部分模块不需要现在定义回复内容，数据库在无内容
+                if(empty($this->reply_content)){
+                    $this->reply_content = '';
                 }
             }else{
-                if($this->config == 'redis'){
-
-
-                }
+                /**
+                 * 木有
+                 */
+                return '';
             }
-            //
         }else{
             /**
              * 自定义关键字
@@ -509,37 +463,41 @@ class ReplyApi
         $this->template_Type = BasicsConst::template_xml[$this->reply_type];
         /**
          * 这里设置检查   模块类是否存在
-         * 不存在  写入日志
          */
-        if(!file_exists('../utils/wechatbrief/Module/'.ucfirst($this->reply_model).'/'.ucfirst($this->reply_model).'Module.php')){
-            file_put_contents('../utils/WechatBrief/Module/Cache/LOG_module'.date('ymd_h').'.txt',
-                '[类名称]./module/'.$this->reply_model.'/'.ucfirst($this->reply_model).'Module.class.php'.'[关键字]'.$this->reply_name, FILE_APPEND);
-            exit();
+        if(!file_exists(self::namespacePath.$this->reply_model.DIRECTORY_SEPARATOR.ucfirst($this->reply_model).'Module.php')){
+            throw new \Exception('模块不存在:'.$this->reply_model.DIRECTORY_SEPARATOR.ucfirst($this->reply_model).'Module.php');
         }
-        //声明模块类
-        $new1 = self::namespace.lcfirst($this->reply_model).'\\'.ucfirst($this->reply_model).'Module';
         /**
          * 实例化
          */
-        $new = new $new1;
-        //回复信息      =   调用$method（）模块中的方法 处理返回的 完整xml内容  echo 到微信
-        $method   = $this->reply_method;
-        $replyMsg = $new->$method($this);
-        $replyMsg = str_replace("<br>", PHP_EOL, $replyMsg);
+        $className = self::namespace.lcfirst($this->reply_model).'\\'.ucfirst($this->reply_model).'Module';
+        $new = new $className($this);
         /**
-         *加密处理
+         * 判断方法是否存在
+         */
+        if (!method_exists($new,$this->reply_method)){
+            throw new \Exception($className.':'.$this->reply_method.'不存在');
+        }
+        $method =& $this->reply_method;
+        /**
+         * 使用方法进行回复
+         */
+        $replyMsg = $new->$method();
+        /**
+         * 替换返回的html br 为  PHP_EOL
+         */
+        if ($this->reply_type == 'text'){
+            $replyMsg = str_replace("<br>", PHP_EOL, $replyMsg);
+        }
+        /**
+         *判断是否需要见面：加密处理
          */
         if($this->encrypt_type){
             $this->WXBizMsgCrypt->encryptMsg($replyMsg, $this->timeStamp, $this->nonce, $replyMsg);
-            //file_put_contents('replyMsg.txt', $replyMsg);
-            //file_put_contents('Config.txt', json_encode(\Config::WECHAT_CONFIG));
-            echo $replyMsg;
+            return  $replyMsg;
         }else{
-
-            echo $replyMsg;
+            return $replyMsg;
         }
-        WechaErrorModel::open()->add(['name'=>'replyMsg','log'=>json_encode($replyMsg),'request'=>$replyMsg]);
-
     }
 
     //语音识别 选择处理
