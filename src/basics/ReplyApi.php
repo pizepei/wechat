@@ -493,7 +493,7 @@ class ReplyApi
          *判断是否需要见面：加密处理
          */
         if($this->encrypt_type){
-            $this->WXBizMsgCrypt->encryptMsg($replyMsg, $this->timeStamp, $this->nonce, $replyMsg);
+            $this->WXBizMsgCrypt->encryptMsg($replyMsg, $this->timestamp, $this->nonce, $replyMsg);
             return  $replyMsg;
         }else{
             return $replyMsg;
