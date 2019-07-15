@@ -17,7 +17,8 @@ use utils\wx\common\WechatBase;
 /**
  * 获取access_token
  */
-class AccessToken{
+class AccessToken
+{
 
     /**
      * 配置信息

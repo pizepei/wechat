@@ -51,9 +51,7 @@ class OpenWechatConfigModel extends Model
         'cache_prefix'=>[
             'TYPE'=>'varchar(43)', 'DEFAULT'=>'wechat:open:', 'COMMENT'=>'获取prefix',
         ],
-        'transpond_url'=>[
-            'TYPE'=>'varchar(150)', 'DEFAULT'=>'wechat:open:', 'COMMENT'=>'转发地址',
-        ],
+
         'status'=>[
             'TYPE'=>"ENUM('1','2','3','4')", 'DEFAULT'=>'1', 'COMMENT'=>'状态1、停用2、启用3、异常',
         ],

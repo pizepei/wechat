@@ -24,6 +24,9 @@ class OpenAuthorizerUserInfoModel extends Model
         'component_appid'=>[
             'TYPE'=>'varchar(42)', 'DEFAULT'=>'', 'COMMENT'=>'第三方平台appid',
         ],
+        'transpond_url'=>[
+            'TYPE'=>'varchar(150)', 'DEFAULT'=>'', 'COMMENT'=>'转发地址',
+        ],
         'PreAuthCode'=>[
             'TYPE'=>'varchar(500)', 'DEFAULT'=>'', 'COMMENT'=>'获取授权链接时的授权码:用来对应用户关系',
         ],

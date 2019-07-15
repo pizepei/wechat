@@ -25,6 +25,11 @@ class Open
     public static $Config = [
         ];
     /**
+     * @var string
+     */
+    protected static $cache_prefix = 'wechat:open:';
+
+    /**
      * redis缓存对象
      * @var null
      */
@@ -211,7 +216,6 @@ class Open
     {
         $result = self::$Redis->get(self::$Config['cache_prefix'].self::$Config['appid'].'_component_access_token');
         $ComponentVerifyTicket = self::$Redis->get(self::$Config['cache_prefix'].self::$Config['appid'].'_ComponentVerifyTicket');
-
         if(empty($result)){
             $url = 'https://api.weixin.qq.com/cgi-bin/component/api_component_token';
             $postData = [
@@ -221,7 +225,6 @@ class Open
             ];
             $result = Func::http_request($url,json_encode($postData));
             $resultJson = json_decode($result,true);
-
             if(isset($resultJson['errcode'])){
                 throw new \Exception($result);
             }
@@ -327,7 +330,7 @@ class Open
      */
     public static function authorizer_access_token($authorizerAppid,$authorizerRefreshToken,$restart=false)
     {
-        $result = self::$Redis->get(self::$Config['cache_prefix'].$authorizerAppid.'_authorizer_access_token');
+        $result = self::$Redis->get(self::$Config['cache_prefix'].':'.$authorizerAppid.':authorizer_access_token');
 
         if(empty($result) || $restart){
             $postData = [
@@ -341,7 +344,18 @@ class Open
             if(isset($result['errcode'])){
                 throw new \Exception(json_encode($authorization));
             }
-            self::$Redis->set(self::$Config['cache_prefix'].$authorizerAppid.'_authorizer_access_token',$authorization,7100);
+            $result['expires_time'] = time()+$result['expires_in']-1;
+            $result['expires_date'] = date('Y-m-d H:i:s',time()+$result['expires_in']-1);
+            /**
+             * 修改
+             */
+            OpenAuthorizerUserInfoModel::table()
+                ->where(['component_appid'=>self::$Config['appid'],'authorizer_appid'=>$authorizerAppid])
+                ->update([
+                    'authorizer_refresh_token'=>$result['authorizer_refresh_token'],
+                    'authorizer_access_token'=>$result['authorizer_refresh_token'],
+                ]);
+            self::$Redis->set(self::$Config['cache_prefix'].$authorizerAppid.'_authorizer_access_token',json_encode($result),7100);
             return $result;
         }
         return json_decode($result,true);
