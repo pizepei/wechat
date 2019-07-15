@@ -148,7 +148,7 @@ class ReplyApi
 
                 $this->encrypt_type = $get['encrypt_type'];
                 //实例化 加解密
-                $WXBizMsgCrypt       = new WXBizMsgCrypt($this->config['token'], $this->config['EncodingAESKey'], $this->config['authorizer_appid']);
+                $WXBizMsgCrypt       = new WXBizMsgCrypt($this->config['token'], $this->config['EncodingAESKey'], $this->config['component_appid']);
                 $this->WXBizMsgCrypt = $WXBizMsgCrypt;
 
                 $this->timeStamp = $get['timestamp'];
