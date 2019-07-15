@@ -15,6 +15,7 @@
         "pizepei/config-ng": "dev-master",
         "guzzlehttp/guzzle": "~6.0",
         "pizepei/encryption":"dev-master",
+        "pizepei/helper": "dev-master",
         "pizepei/func": "dev-master"
     },
     "autoload": {

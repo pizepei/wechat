@@ -32,7 +32,14 @@ class Config
     {
         $this->redis = $redis;
     }
-
+    /**
+     * 缓存时间单位s
+     */
+    const Open_cache_time = 120;
+    /**
+     * 缓存prefix
+     */
+    const Open_cache_prefix = 'wechat:Alone:Config:';
     /**
      * 获取开放平台配置
      * @param bool $cache
@@ -44,12 +51,22 @@ class Config
          * 判断是否需要缓存
          */
         if ($cache){
-            $OpenWechatConfigModel = OpenWechatConfigModel::table();
+            $config = $this->redis->get(self::Open_cache_prefix.$appid);
+            $config = json_decode($config,true);
+            if (!empty($config) || $config !==null   || $config!==false || is_array($config)){
+                return $config;
+            }
+        }
+        $OpenWechatConfigModel = OpenWechatConfigModel::table();
+        if ($appid == ''){
             $config =  $OpenWechatConfigModel->limit();
         }else{
-            $OpenWechatConfigModel = OpenWechatConfigModel::table();
             $config =  $OpenWechatConfigModel->where(['appid'=>$appid])->fetch();
         }
+        if ($cache && !empty($config)){
+            $this->redis->set(self::Alone_cache_prefix.$appid,json_encode($config),self::Alone_cache_time);
+        }
+
         return $config;
 
     }
@@ -75,7 +92,7 @@ class Config
             $config = $this->redis->get(self::Alone_cache_prefix.$appid);
             $config = json_decode($config,true);
         }
-        if (isset($config) && !empty($config)){
+        if (!empty($config) || $config !==null   || $config!==false || is_array($config)){
             return $config;
         }
         /**

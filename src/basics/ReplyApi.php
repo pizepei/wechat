@@ -158,10 +158,7 @@ class ReplyApi
                 $this->postObj = $msg;
             }
         }
-        //xml_todj()获取 xml并且 初始化 接收的成员属性
-        //template_xml() 初始化 信息面板 成员属性
-        $this->xml_todj();
-
+        $this->xml_todj();//获取 xml并且 初始化 接收的成员属性
     }
     /**
      * 魔术方法
@@ -175,10 +172,8 @@ class ReplyApi
         if(isset($this->$name)){
             return $this->$name;
         }
-
         return null;
     }
-
     /**
      * [xml_todj 获取 xml 对象]
      *
@@ -187,8 +182,6 @@ class ReplyApi
      */
     public function xml_todj()
     {
-
-
         if(!empty($this->postObj)){
             //这个语句直接百度的时候，查到的信息是做安全防御用的：对于PHP，由于simplexml_load_string 函数的XML解析问题出现在libxml库上，所以加载实体前可以调用这样一个函数，所以这一句也应该是考虑到了安全问题。
             libxml_disable_entity_loader(true);
@@ -227,7 +220,6 @@ class ReplyApi
                 $this->UniqId = $postObj->UniqId;
                 $this->PoiId  = $postObj->PoiId;
                 $this->Result = $postObj->result;
-
                 $this->msg = $postObj->msg;
 
             }else{
@@ -244,18 +236,14 @@ class ReplyApi
      */
     function content_type()
     {
-
         switch($this->msgtype){
             case 'text'://文字回复
-
                 $this->keyword = $this->Content;
                 //数据库关键字
                 $result = $this->keyword_trigger();
-
                 break;
 
             case 'image'://图片
-
                 $this->Content = $this->MediaId;
                 //数据库关键字
                 $result = $this->keyword_trigger();
@@ -292,43 +280,38 @@ class ReplyApi
 
                     //subscribe(订阅)、unsubscribe(取消订阅)
                     case 'subscribe':
-                        //                     if(empty()){
-                        //
-                        WeChat::userSubscribe($this->fromUsername,1);
+                        //扫描带参数二维码事件-------------------------用户未关注时，进行关注后的事件推送-----------------------//
+
+                        /**
+                         * 关注事件需要写入粉丝表数据
+                         * 如果是二维码需要写入相关的二维码事件信息
+                         */
                         if(isset($this->EventKey) && !empty($this->EventKey)){
                             /**
                              * 没有关注公众号的扫描
                              */
-                            //$this->Ticket = ltrim($this->Ticket, 'qrscene_');
-
                             $this->Ticket = str_replace("qrscene_","",$this->Ticket);
                             $this->EventKey = str_replace("qrscene_","",$this->EventKey);
-
-                            //$this->EventKey = ltrim($this->EventKey, 'qrscene_');
                             $this->Content = 'SCAN_qrcode_EventKey';
                             $result = $this->keyword_trigger();
-
-                            //$this->keyword_trigger($this->EventKey);
                         }else{
-
                             $this->Content = 'subscribe';
                             $result = $this->keyword_trigger();
                         }
-
                         break;
 
-
                     case 'unsubscribe':
-                        WeChat::userSubscribe($this->fromUsername,0);
-
                         $this->Content = 'unsubscribe';
+                        /**
+                         * 取消关注事件需要设置粉丝表信息
+                         */
+
                         //数据库关键字
                         $result = $this->keyword_trigger();
                         break;
 
 
                     case 'CLICK':
-                        //
                         //点击菜单拉取消息时的事件推送
                         //用户点击自定义菜单后，微信会把点击事件推送给开发者，请注意，点击菜单弹出子菜单，不会产生上报。
                         $this->Content = $this->EventKey; //todo:这里删除了拼接CLICK_
@@ -346,30 +329,6 @@ class ReplyApi
                         $this->Content = 'unsubscribe';
                         $result = $this->keyword_trigger();
                         break;
-
-                    // 扫描带参数二维码事件-------------------------用户未关注时，进行关注后的事件推送-----------------------//
-                    //case 'subscribe': //1.
-                    //
-                    //    if(empty($this->Ticket)){
-                    //        //                            fdfdhk
-                    //        //没有  扫描事件  的关注事件
-                    //        //$this->Content = 'subscribe';
-                    //        //数据库关键字
-                    //        $this->keyword_trigger();
-                    //
-                    //    }else{
-                    //
-                    //        //扫描二维码  并且没有关注公众号
-                    //        //$this->Ticket = ltrim($this->Ticket, 'qrscene_');
-                    //        $this->Ticket = str_replace("qrscene_","",$this->Ticket);
-                    //        $this->keyword_trigger($this->EventKey);
-                    //        // $this->qrscene_ = 'qrscene_';
-                    //        //                                $this->subscribe();
-                    //    }
-                    //    // $this->Content = '关注事件';
-                    //    // EventKey    事件KEY值，qrscene_为前缀，后面为二维码的参数值
-                    //    // Ticket  二维码的ticket，可用来换取二维码图片
-                    //    break;
 
                     case 'SCAN': //2. 用户已关注时的事件推送 (包括二维码)
                         $this->EventKey = str_replace("qrscene_","",$this->EventKey);
@@ -421,9 +380,10 @@ class ReplyApi
                 //从数据库查询关键字
                 $result = OpenWechatKeywordModel::table()->where(
                     [
-                    'authorizer_appid'=>$this->config['authorizer_appid'],
-                    'component_appid'=>$this->config['component_appid'],
-                    'status'=>10,
+                        'authorizer_appid'=>$this->config['authorizer_appid'],
+                        'component_appid'=>$this->config['component_appid'],
+                        'status'=>10,
+                        'name'=>$sql_keyword,
                     ]
                 )->fetch();
                 if (empty($result)){
@@ -499,28 +459,6 @@ class ReplyApi
             return $replyMsg;
         }
     }
-
-    //语音识别 选择处理
-    function voice()
-    {
-
-    }
-
-    //绑定
-    public function subscribe()
-    {
-
-    }
-
-    //获取用户基本信息
-    public function get_user_info($access_token, $openid)
-    {
-        $url = "https://api.weixin.qq.com/cgi-bin/user/info?access_token=".$access_token."&openid=".$openid."&lang=zh_CN";
-        $res = func::http_request($url);
-
-        return json_decode($res, true);
-    }
-
     /**
      * [inject_check 自动过滤Sql的注入语句]
      *
@@ -532,14 +470,12 @@ class ReplyApi
      */
     public function inject_check($Sql_Str)//。
     {
-
         if(!get_magic_quotes_gpc()) // 判断magic_quotes_gpc是否打开
         {
             $Sql_Str = addslashes($Sql_Str); // 进行过滤
         }
         $Sql_Str = str_replace("_", "_", $Sql_Str); // 把 '_'过滤掉
         $Sql_Str = str_replace("%", "%", $Sql_Str); // 把' % '过滤掉
-
         $check = preg_match("/select|insert|update|;|delete|'|\*|*|../|./|union|into|load_file|outfile/i", $Sql_Str);
         if($check){
             return '非法关键字';
@@ -549,21 +485,5 @@ class ReplyApi
             return $Sql_Str;
         }
     }
-    /**
-     * 向某个客户端连接发消息
-     *
-     * @param int    $client_id
-     * @param string $message
-     *
-     * @return bool
-     */
-    public function sendToClient($client_id, $message)
-    {
-        // 设置GatewayWorker服务的Register服务ip和端口，请根据实际情况改成实际值
-        Gateway::$registerAddress = '127.0.0.1:1238';
-
-        return Gateway::sendToClient($client_id, $message);
-    }
-
 
 }
