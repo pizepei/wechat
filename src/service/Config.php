@@ -56,7 +56,7 @@ class Config
         }
         $OpenWechatConfigModel = OpenWechatConfigModel::table();
         if ($appid == ''){
-            $config =  $OpenWechatConfigModel->limit();
+            $config =  $OpenWechatConfigModel->limit()[0]??[];
         }else{
             $config =  $OpenWechatConfigModel->where(['appid'=>$appid])->fetch();
         }

@@ -5,19 +5,19 @@
  * @Last Modified by:   pizepei
  * @Last Modified time: 2018-06-28 16:36:08
  */
-namespace pizepei\wechat\basics;
-use pizepei\wechat\basics\Func;
-use pizepei\wechat\basics\AccessToken;
+namespace utils\wechatbrief\Port;
+use utils\wechatbrief\func;
+use utils\wechatbrief\Port\AccessToken;
 /**
  * 微信  带参数的二维码
  * <img alt="" src="https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQGm7zwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyVlB2cFZkeGtibl8xVXhNVE5xMXoAAgQZqfdaAwQIBwAA" width="200" id="pay_img" style="overflow: hidden; display:;">
  */
 class Ticket{
-     private static $expire_seconds = '';//过期时间
-     private static $scene_id = '';//参数
-     private static $action_name = '';
-     private static $access_token = '';
-     private static $ticket ='';
+    private static $expire_seconds = '';//过期时间
+    private static $scene_id = '';//参数
+    private static $action_name = '';
+    private static $access_token = '';
+    private static $ticket ='';
 
     /**
      * [Ticket 获取]
@@ -30,7 +30,7 @@ class Ticket{
         // 默认临时
         if($expire_seconds){
             //临时
-            $qrcode = '{"expire_seconds": '.$expire_seconds.', "action_name": "QR_SCENE", "action_info": {"scene": {"scene_id": '.$scene_id.'}}}'; 
+            $qrcode = '{"expire_seconds": '.$expire_seconds.', "action_name": "QR_SCENE", "action_info": {"scene": {"scene_id": '.$scene_id.'}}}';
         }else{
             //永久
             $qrcode = '{"action_name": "QR_LIMIT_SCENE", "action_info": {"scene": {"scene_id": '.$scene_id.'}}}';
@@ -48,6 +48,6 @@ class Ticket{
         // ["ticket"] => string(96) "gQH17jwAAAAAAAAAAS5odHRwOi8vd2V"
         // ["expire_seconds"] => int(1800)
         // ["url"] => string(45) "http://weixin.qq.com/q/02uyTuUPxkbn_1R9mYxq15"
-     }
+    }
 
- }
+}

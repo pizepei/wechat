@@ -331,7 +331,6 @@ class Open
     public static function authorizer_access_token($authorizerAppid,$authorizerRefreshToken,$restart=false)
     {
         $result = self::$Redis->get(self::$Config['cache_prefix'].':'.$authorizerAppid.':authorizer_access_token');
-
         if(empty($result) || $restart){
             $postData = [
                 "component_appid"=>self::$Config['appid'],
@@ -438,8 +437,7 @@ class Open
      */
     public static function decryption($get,$input)
     {
-        //file_put_contents('get',json_encode($get));
-        //file_put_contents('input',$input);
+
         $WXBizMsgCrypt       = new WXBizMsgCrypt(self::$Config['token'], self::$Config['EncodingAESKey'],self::$Config['appid']);
         $WXBizMsgCrypt->decryptMsg($get['msg_signature'], $get['timestamp'], $get['nonce'], $input, $msg);
 
