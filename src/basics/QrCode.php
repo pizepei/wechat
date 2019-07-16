@@ -94,26 +94,14 @@ class QrCode
         if (!isset($body['ticket']) || isset($body['errcode'])){
             throw new \Exception($body['errmsg']);
         }
-        $body['src'] = 'https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket='.$body['ticket'];
-        $body['scene_id'] = $scene_id;
-        $body['type'] = $type;
         /**
          * 处理数据
          */
-        var_dump($body);
-//
-//        $result = func::http_request($url,$qrcode);
-//        $jsoninfo = json_decode($result, true);
-//        if(empty($jsoninfo['errcode'])){
-//
-//            self::$ticket = $jsoninfo["ticket"];
-////            log::addLog(static::$ticket,$jsoninfo["url"],$scene_id,$type,$expire_seconds,$uid,$http_agent,$client_id,$remember);
-//            return $jsoninfo;
-//        }
-        return false;
-        // ["ticket"] => string(96) "gQH17jwAAAAAAAAAAS5odHRwOi8vd2V"
-        // ["expire_seconds"] => int(1800)
-        // ["url"] => string(45) "http://weixin.qq.com/q/02uyTuUPxkbn_1R9mYxq15"
+        $body['src'] = 'https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket='.$body['ticket'];
+        $body['scene_id'] = $scene_id;
+        $body['type'] = $type;
+        return $body;
+
     }
 
 
