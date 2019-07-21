@@ -13,7 +13,6 @@
     "require": {
         "php": ">=7.0.0",
         "pizepei/config-ng": "dev-master",
-        "guzzlehttp/guzzle": "~6.0",
         "pizepei/encryption":"dev-master",
         "pizepei/helper": "dev-master"
     },
