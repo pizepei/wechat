@@ -10,6 +10,7 @@
 
 namespace pizepei\wechat\basics;
 
+use pizepei\helper\Helper;
 use pizepei\model\redis\Redis;
 use pizepei\wechat\service\Config;
 use GuzzleHttp\Client;
@@ -72,7 +73,15 @@ class QrCode
             //永久
             $qrcode = '{"action_name": "QR_LIMIT_SCENE", "action_info": {"scene": {"scene_id": '.$scene_id.'}}}';
         }
-        $url = "https://api.weixin.qq.com/cgi-bin/qrcode/create";
+        $url = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=".$this->config->access_token($this->authorizerAppid)['authorizer_access_token'];
+
+        $res  = Helper::init()->httpRequest($url.\Deploy::INITIALIZE['appid'],Helper::init()->json_encode($postData),[
+        ]);
+        if ($res['RequestInfo']['http_code'] !== 200){
+            throw new \Exception('初始化配置失败：请求配置中心失败');
+        }
+
+
         /**
          * GuzzleHttp请求配置接口
          *service-config
@@ -90,7 +99,10 @@ class QrCode
         {
             throw new \Exception('初始化配置失败：请求配置中心失败');
         }
-        $body = json_decode($response->getBody()->getContents(),true);
+        if (Helper::init()->is_empty($rws,'body')){
+            throw new \Exception('请求失败');
+        }
+        $body =  Helper::init()->json_decode($rws['body']);
         if (!isset($body['ticket']) || isset($body['errcode'])){
             throw new \Exception($body['errmsg']);
         }
