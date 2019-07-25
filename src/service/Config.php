@@ -50,7 +50,7 @@ class Config
         if ($cache){
             $config = $this->redis->get(self::Open_cache_prefix.$appid);
             $config = json_decode($config,true);
-            if (!empty($config) || $config !==null   || $config!==false || is_array($config)){
+            if (!empty($config) && $config !==null   && $config!==false && is_array($config)){
                 return $config;
             }
         }
@@ -88,7 +88,8 @@ class Config
         if ($cache){
             $config = $this->redis->get(self::Alone_cache_prefix.$appid);
             $config = json_decode($config,true);
-            if (isset($config) || !empty($config) || $config !==null   || $config!==false || is_array($config)){
+            if (isset($config) && !empty($config) && $config !==null   && $config!==false && is_array($config)){
+
                 return $config;
             }
         }
@@ -103,6 +104,7 @@ class Config
          * 获取配置
          */
         $OpenConfig = $this->getOpenConfig($cache,$config['component_appid']);
+
         if (!isset($OpenConfig['appid'])){
             throw new \Exception('获取OpenConfig失败');
         }
