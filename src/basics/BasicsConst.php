@@ -26,6 +26,7 @@ class BasicsConst
             'title'       => '二维码事件',          //规则名称
             'name'        => 'SCAN_qrcode_EventKey',          //关键字
             'match_type'   => '10',                //10全匹配,20模糊匹配
+            'module_source'   => 'defaultSource',   //模块来源'defaultSource' or 'customSource'
             'model'       => 'Qrcode',          //模型名称（模块）
             'method'      => 'index',          //模型方法名称
             'type'        => 'text',          //回复类型
@@ -36,6 +37,7 @@ class BasicsConst
             'title'       => '获取openid',          //规则名称
             'name'        => 'openid',          //关键字
             'match_type'   => '10',                //10全匹配,20模糊匹配
+            'module_source'   => 'defaultSource',   //模块来源'defaultSource' or 'customSource'
             'model'       => 'keyword',          //模型名称（模块）
             'method'      => 'getOpenid',          //模型方法名称
             'type'        => 'text',          //回复类型

@@ -33,8 +33,22 @@ use utils\wx\event\EventLogic;
 
 class ReplyApi
 {
+    /**
+     * 模块的命名空间
+     */
     const  namespace = 'pizepei\wechat\module\\';
+    /**
+     * 模块类文件路径
+     */
     const  namespacePath = '..'.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'pizepei'.DIRECTORY_SEPARATOR.'wechat'.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR.'module'.DIRECTORY_SEPARATOR;
+    /**
+     * 自定义模块类文件路径
+     */
+    const  customNamespacePath = '..'.DIRECTORY_SEPARATOR.'service'.DIRECTORY_SEPARATOR.'wechat'.DIRECTORY_SEPARATOR.'module'.DIRECTORY_SEPARATOR;
+    /**
+     *自定义模块命名空间
+     */
+    const  customNamespace = 'service\wechat\module\\';
 
     private $postObj;//接受管理的xml对象
 
@@ -122,6 +136,11 @@ class ReplyApi
     private $reply_content = '';
     //需要回复的消息类型
     private $reply_type = '';
+    /**
+     * 模块来源
+     * @var string
+     */
+    private $reply_module_source = 'defaultSource';
     //提取的关键字
     private $keyword;
 
@@ -400,6 +419,8 @@ class ReplyApi
                 $this->reply_method  = $result['method'];
                 $this->reply_type    = $result['type'];
                 $this->reply_content = $result['content'];
+                $this->reply_module_source = $result['module_source'];
+
                 //部分模块不需要现在定义回复内容，数据库在无内容
                 if(empty($this->reply_content)){
                     $this->reply_content = '';
@@ -411,9 +432,7 @@ class ReplyApi
                 return '';
             }
         }else{
-            /**
-             * 自定义关键字
-             */
+            # 自定义关键字（只是回复内容）
             $this->reply_name    = 'name';
             $this->reply_model   = 'keyword';
             $this->reply_method  = 'index';
@@ -421,16 +440,21 @@ class ReplyApi
         }
         //匹配回复   信息模板
         $this->template_Type = BasicsConst::template_xml[$this->reply_type];
-        /**
-         * 这里设置检查   模块类是否存在
-         */
-        if(!file_exists(self::namespacePath.$this->reply_model.DIRECTORY_SEPARATOR.ucfirst($this->reply_model).'Module.php')){
-            throw new \Exception('模块不存在:'.$this->reply_model.DIRECTORY_SEPARATOR.ucfirst($this->reply_model).'Module.php');
+        # 判断是否是自定义模块
+        if ($this->reply_module_source == 'defaultSource'){
+            $namespacePath = self::namespacePath;
+            $namespace = self::namespace;
+        }else{
+            $namespacePath = self::customNamespacePath;
+            $namespace = self::customNamespace;
         }
-        /**
-         * 实例化
-         */
-        $className = self::namespace.lcfirst($this->reply_model).'\\'.ucfirst($this->reply_model).'Module';
+        # 这里设置检查   模块类是否存在
+        if(!file_exists($namespacePath.$this->reply_model.DIRECTORY_SEPARATOR.ucfirst($this->reply_model).'Module.php')){
+            throw new \Exception('模块不存在['.$this->reply_module_source.']:'.$this->reply_model.DIRECTORY_SEPARATOR.ucfirst($this->reply_model).'Module.php');
+        }
+        #拼接类
+        $className = $namespace.lcfirst($this->reply_model).'\\'.ucfirst($this->reply_model).'Module';
+        # 实例化
         $new = new $className($this);
         /**
          * 判断方法是否存在
@@ -439,19 +463,13 @@ class ReplyApi
             throw new \Exception($className.':'.$this->reply_method.'不存在');
         }
         $method =& $this->reply_method;
-        /**
-         * 使用方法进行回复
-         */
+        # 使用模块方法进行处理并且返回回复xml
         $replyMsg = $new->$method();
-        /**
-         * 替换返回的html br 为  PHP_EOL
-         */
+        # 替换返回的html br 为  PHP_EOL
         if ($this->reply_type == 'text'){
             $replyMsg = str_replace("<br>", PHP_EOL, $replyMsg);
         }
-        /**
-         *判断是否需要见面：加密处理
-         */
+        # 判断是否需要加密：加密处理
         if($this->encrypt_type){
             $this->WXBizMsgCrypt->encryptMsg($replyMsg, $this->timestamp, $this->nonce, $replyMsg);
             return  $replyMsg;

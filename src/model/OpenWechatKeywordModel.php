@@ -36,6 +36,9 @@ class OpenWechatKeywordModel extends Model
         'match_type'=>[
             'TYPE'=>"ENUM('10','20')", 'DEFAULT'=>'10', 'COMMENT'=>'10全匹配,20模糊匹配',
         ],
+        'module_source'=>[
+            'TYPE'=>"ENUM('defaultSource','customSource')", 'DEFAULT'=>'default', 'COMMENT'=>'处理模块来源',
+        ],
         'model'=>[
             'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'模型名称（模块）',
         ],
@@ -73,11 +76,14 @@ class OpenWechatKeywordModel extends Model
     /**
      * @var int 表版本（用来记录表结构版本）在表备注后面@$table_version
      */
-    protected $table_version = 0;
+    protected $table_version = 1;
     /**
      * @var array 表结构变更日志 版本号=>['表结构修改内容sql','表结构修改内容sql']
      */
     protected $table_structure_log = [
-
+        1=>[
+            # 增加自定义模块支持
+            ['module_source','ADD'," module_source ENUM('defaultSource','customSource') DEFAULT 'defaultSource' COMMENT '处理模块来源' ",'修改说明：增加处理模块来源使库支持自定义处理模块','pizepei'],
+        ],
     ];
 }
