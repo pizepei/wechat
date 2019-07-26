@@ -46,7 +46,120 @@ class BasicsConst
         ],
 
     ];
-
+    /**
+     * 模板通知
+     */
+    const TEMPLATE = [
+        'OPENTM407316934' => [
+            'templateID'       => 'OPENTM407316934',
+            "title"            => "流程待办提醒",
+            "primary_industry" => "IT科技",
+            "deputy_industry"  => "互联网|电子商务",
+            "data"             => [
+                'first'    => ['value' => "注意了——有用户发起在线咨询\n", 'color' => "#000000",],
+                'keyword1' => ['value' => 'data', 'color' => '#000093',],
+                'keyword2' => ['value' => 'data', 'color' => '#000093',],
+                'keyword3' => ['value' => 'data', 'color' => '#000093',],
+                'keyword4' => ['value' => 'data', 'color' => "#000093",],
+                'remark'   => ['value' => 'data', 'color' => '#000093',],
+            ],
+        ],
+        'OPENTM406411654' => [
+            'templateID'       => 'OPENTM406411654',
+            "title"            => "订单取消通知",
+            "primary_industry" => "IT科技",
+            "deputy_industry"  => "互联网|电子商务",
+            "data"             => [
+                'first'    => ['value' => "data", 'color' => "#000000",],
+                'keyword1' => ['value' => 'data', 'color' => '#000093',],
+                'keyword2' => ['value' => 'data', 'color' => '#000093',],
+                'remark'   => ['value' => 'data', 'color' => '#000093',],
+            ],
+        ],
+        'OPENTM202521011' => [
+            'templateID'       => 'OPENTM202521011',
+            "title"            => "订单完成通知",
+            "primary_industry" => "IT科技",
+            "deputy_industry"  => "互联网|电子商务",
+            "data"             => [
+                'first'    => ['value' => "data", 'color' => "#000000",],
+                'keyword1' => ['value' => "data", 'color' => "#000000",],
+                'keyword2' => ['value' => "data", 'color' => "#000000",],
+                'remark'   => ['value' => "data", 'color' => "#000000",],
+            ],
+        ],
+        'OPENTM412319459' => [
+            'templateID'       => 'OPENTM412319459',
+            "title"            => "核销成功通知",
+            "primary_industry" => "IT科技",
+            "deputy_industry"  => "互联网|电子商务",
+            "data"             => [
+                'first'    => ['value' => "data", 'color' => "#000000",],
+                'keyword1' => ['value' => 'data', 'color' => '#000093',],
+                'keyword2' => ['value' => 'data', 'color' => '#000093',],
+                'keyword3' => ['value' => 'data', 'color' => '#000093',],
+                'keyword4' => ['value' => 'data', 'color' => "#000093",],
+                'remark'   => ['value' => 'data', 'color' => '#000093',],
+            ],
+        ],
+        'OPENTM407734422' => [
+            'templateID'       => 'OPENTM407734422',
+            "title"            => "取货超时提醒",
+            "primary_industry" => "IT科技",
+            "deputy_industry"  => "互联网|电子商务",
+            "data"             => [
+                'first'    => ['value' => "data", 'color' => "#000000",],
+                'keyword1' => ['value' => "data", 'color' => "#000000",],
+                'keyword2' => ['value' => "data", 'color' => "#000000",],
+                'keyword3' => ['value' => "data", 'color' => "#000000",],
+                'keyword4' => ['value' => "data", 'color' => "#000000",],
+                'remark'   => ['value' => "data", 'color' => "#000000",],
+            ],
+        ],
+        'OPENTM412581791' => [
+            'templateID'       => 'OPENTM412581791',
+            "title"            => "客户到店通知",
+            "primary_industry" => "IT科技",
+            "deputy_industry"  => "互联网|电子商务",
+            "data"             => [
+                'first'    => ['value' => "data", 'color' => "#000000",],
+                'keyword1' => ['value' => "data", 'color' => "#000000",],
+                'keyword2' => ['value' => "data", 'color' => "#000000",],
+                'keyword3' => ['value' => "data", 'color' => "#000000",],
+                'keyword4' => ['value' => "data", 'color' => "#000000",],
+                'keyword5' => ['value' => "data", 'color' => "#000000",],
+                'remark'   => ['value' => "data", 'color' => "#000000",],
+            ],
+        ],
+        'OPENTM414338361' => [
+            'templateID'       => 'OPENTM414338361',
+            "title"            => "消费成功通知",
+            "primary_industry" => "IT科技",
+            "deputy_industry"  => "互联网|电子商务",
+            "data"             => [
+                'first'    => ['value' => "data", 'color' => "#000000",],
+                'keyword1' => ['value' => 'data', 'color' => '#000000',],
+                'keyword2' => ['value' => 'data', 'color' => '#000000',],
+                'keyword3' => ['value' => 'data', 'color' => '#000000',],
+                'keyword4' => ['value' => 'data', 'color' => "#000000",],
+                'remark'   => ['value' => 'data', 'color' => '#5891df',],
+            ],
+        ],
+        'OPENTM208001772' => [
+            'templateID'       => 'OPENTM208001772',
+            "title"            => "流程待办提醒",
+            "primary_industry" => "IT科技",
+            "deputy_industry"  => "IT软件与服务",
+            "data"             => [
+                'first'    => ['value' => "data", 'color' => "#000000",],
+                'keyword1' => ['value' => 'data', 'color' => '#000000',],
+                'keyword2' => ['value' => 'data', 'color' => '#000000',],
+                'keyword3' => ['value' => 'data', 'color' => '#000000',],
+                'keyword4' => ['value' => 'data', 'color' => "#000000",],
+                'remark'   => ['value' => 'data', 'color' => '#5891df',],
+            ],
+        ],
+    ];
     //----------------回复信息需要的 成员属性---------------------------------------
     //text 文字  image 图片  news 图文模板
     //信息  模板  array

@@ -10,6 +10,10 @@ namespace pizepei\wechat\basics;
 
 use jt\error\Exception;
 use model\wechat\TemplateModel;
+use pizepei\helper\Helper;
+use pizepei\model\redis\Redis;
+use pizepei\wechat\model\OpenWechatTemplateModel;
+use pizepei\wechat\service\Config;
 use utils\Logger;
 use utils\Sundry;
 use utils\wechatbrief\func;
@@ -32,7 +36,7 @@ class Template
     protected $access_token = '';//access_token
 
     protected $data = '';//数据
-
+    protected $authorizer_appid = '';//公众号appid
     /**
      * @var array
      */
@@ -44,123 +48,22 @@ class Template
 
     protected $addTemplateApi = 'https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='; //获取模板ID
 
-    const TEMPLATE = [
-        'OPENTM407316934' => [
-            'templateID'       => 'OPENTM407316934',
-            "title"            => "流程待办提醒",
-            "primary_industry" => "IT科技",
-            "deputy_industry"  => "互联网|电子商务",
-            "data"             => [
-                'first'    => ['value' => "注意了——有用户发起在线咨询\n", 'color' => "#000000",],
-                'keyword1' => ['value' => 'data', 'color' => '#000093',],
-                'keyword2' => ['value' => 'data', 'color' => '#000093',],
-                'keyword3' => ['value' => 'data', 'color' => '#000093',],
-                'keyword4' => ['value' => 'data', 'color' => "#000093",],
-                'remark'   => ['value' => 'data', 'color' => '#000093',],
-            ],
-        ],
-        'OPENTM406411654' => [
-            'templateID'       => 'OPENTM406411654',
-            "title"            => "订单取消通知",
-            "primary_industry" => "IT科技",
-            "deputy_industry"  => "互联网|电子商务",
-            "data"             => [
-                'first'    => ['value' => "data", 'color' => "#000000",],
-                'keyword1' => ['value' => 'data', 'color' => '#000093',],
-                'keyword2' => ['value' => 'data', 'color' => '#000093',],
-                'remark'   => ['value' => 'data', 'color' => '#000093',],
-            ],
-        ],
-        'OPENTM202521011' => [
-            'templateID'       => 'OPENTM202521011',
-            "title"            => "订单完成通知",
-            "primary_industry" => "IT科技",
-            "deputy_industry"  => "互联网|电子商务",
-            "data"             => [
-                'first'    => ['value' => "data", 'color' => "#000000",],
-                'keyword1' => ['value' => "data", 'color' => "#000000",],
-                'keyword2' => ['value' => "data", 'color' => "#000000",],
-                'remark'   => ['value' => "data", 'color' => "#000000",],
-            ],
-        ],
-        'OPENTM412319459' => [
-            'templateID'       => 'OPENTM412319459',
-            "title"            => "核销成功通知",
-            "primary_industry" => "IT科技",
-            "deputy_industry"  => "互联网|电子商务",
-            "data"             => [
-                'first'    => ['value' => "data", 'color' => "#000000",],
-                'keyword1' => ['value' => 'data', 'color' => '#000093',],
-                'keyword2' => ['value' => 'data', 'color' => '#000093',],
-                'keyword3' => ['value' => 'data', 'color' => '#000093',],
-                'keyword4' => ['value' => 'data', 'color' => "#000093",],
-                'remark'   => ['value' => 'data', 'color' => '#000093',],
-            ],
-        ],
-        'OPENTM407734422' => [
-            'templateID'       => 'OPENTM407734422',
-            "title"            => "取货超时提醒",
-            "primary_industry" => "IT科技",
-            "deputy_industry"  => "互联网|电子商务",
-            "data"             => [
-                'first'    => ['value' => "data", 'color' => "#000000",],
-                'keyword1' => ['value' => "data", 'color' => "#000000",],
-                'keyword2' => ['value' => "data", 'color' => "#000000",],
-                'keyword3' => ['value' => "data", 'color' => "#000000",],
-                'keyword4' => ['value' => "data", 'color' => "#000000",],
-                'remark'   => ['value' => "data", 'color' => "#000000",],
-            ],
-        ],
-        'OPENTM412581791' => [
-            'templateID'       => 'OPENTM412581791',
-            "title"            => "客户到店通知",
-            "primary_industry" => "IT科技",
-            "deputy_industry"  => "互联网|电子商务",
-            "data"             => [
-                'first'    => ['value' => "data", 'color' => "#000000",],
-                'keyword1' => ['value' => "data", 'color' => "#000000",],
-                'keyword2' => ['value' => "data", 'color' => "#000000",],
-                'keyword3' => ['value' => "data", 'color' => "#000000",],
-                'keyword4' => ['value' => "data", 'color' => "#000000",],
-                'keyword5' => ['value' => "data", 'color' => "#000000",],
-                'remark'   => ['value' => "data", 'color' => "#000000",],
-            ],
-        ],
-        'OPENTM414338361' => [
-            'templateID'       => 'OPENTM414338361',
-            "title"            => "消费成功通知",
-            "primary_industry" => "IT科技",
-            "deputy_industry"  => "互联网|电子商务",
-            "data"             => [
-                'first'    => ['value' => "data", 'color' => "#000000",],
-                'keyword1' => ['value' => 'data', 'color' => '#000000',],
-                'keyword2' => ['value' => 'data', 'color' => '#000000',],
-                'keyword3' => ['value' => 'data', 'color' => '#000000',],
-                'keyword4' => ['value' => 'data', 'color' => "#000000",],
-                'remark'   => ['value' => 'data', 'color' => '#5891df',],
-            ],
-        ],
-
-    ];
-
     /**
-     * [__construct 构造函数，获取Access Token]
-     *
-     * @Effect
-     * @param  [type] $openid      [接受者id]
-     * @param  [type] $template_id_short [模板id] 短ID
-     * @param  string $url [url]
+     * Template constructor.
+     * @param string $authorizer_appid  微信公众号appid
+     * @param string $openid   [接受者id]
+     * @param string $template_id_short [模板id] 短ID
+     * @param string $url 详情url地址
      */
-    public function __construct($openid, $template_id_short, $url = '')
-    {      //获取AccessToken
-        //$AccessToken        = new AccessToken();
-        //$this->access_token = $AccessToken->access_token();
-        $wxBase             = new WechatBase();
-        $this->access_token = $wxBase->getAccessToken();
+    public function __construct(string $authorizer_appid,string $openid,string $template_id_short, string $url = '')
+    {
+        $config = new Config(Redis::init());
+        $this->access_token  = $config->access_token($authorizer_appid)['authorizer_access_token'];
         //初始化  参数
         $this->url               = $url;
         $this->template_id_short = $template_id_short;
         $this->openid            = $openid;
+        $this->authorizer_appid  = $authorizer_appid;
     }
 
     /**
@@ -173,16 +76,16 @@ class Template
         $data = [
             'template_id_short' => $this->template_id_short,
         ];
-
-        $jsonRes = func::http_request($url, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-
+        Helper::init()->syncLock(Redis::init(),['open','getTempLateId',$this->template_id_short]);#设置syncLock
+        $jsonRes = Helper::init()->httpRequest($url, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))['body'];
+        var_dump($jsonRes);
         $res = json_decode($jsonRes, true);
-
         if($res['errcode'] == 0){
+            Helper::init()->syncLock(Redis::init(),['open','getTempLateId',$this->template_id_short],false);#设置syncLock
             return $res['template_id'];
         }else{
-            Logger::logToTable('获取模板失败_'.date('Y-m-d').'_'.Sundry::randomStr(5),$res,true);
-            return '';
+            Helper::init()->syncLock(Redis::init(),['open','getTempLateId',$this->template_id_short],false);#设置syncLock
+            throw new \Exception($res['errmsg']);
         }
     }
 
@@ -213,15 +116,13 @@ class Template
     //}
 
     /**
-     * [send 发送模板]
-     *
+     * 发送模板通知
      * @Effect
-     * @param  [type] $data [需要发送的模板数据]
-     * @return [type]       [description]
+     * @param  [type] $data [需要发送的模板数据]注意内容数量必须一致
+     * @return [array]  "errcode": 0, errmsg": "ok",msgid": 914761096463106048,
      */
     public function send($data)
     {
-
         $this->data = $data;
         //通过模板id  获取模板模型
         $this->ModelData();
@@ -229,18 +130,20 @@ class Template
         $this->model();
         //准备  url
         $Add_url = $this->Add_url.$this->access_token;
-        //        var_dump($this->template_model);
-        //        exit;
-        //curl  请求
-        $res = func::http_request($Add_url, $this->template_model);
-
+        $res = Helper::init()->httpRequest($Add_url, $this->template_model)['body'];
         //返回结果
-        return json_decode($res, true);
+        return json_decode($res??'', true);
     }
 
+    /**
+     * @Author 皮泽培
+     * @Created 2019/7/26 12:39
+     * @title  拼接数据
+     * @explain
+     * @return bool
+     */
     public function Model()
     {
-
         //判断  是否有模板
         if(!$this->template_data){
             return false;
@@ -252,7 +155,6 @@ class Template
         if(isset($this->data[0]['value'])){
             $type = true;
         }
-
         $i = 0;
         //初始化模板
         foreach($this->template_data['data'] as $key => $value){
@@ -263,7 +165,6 @@ class Template
             }
             ++$i;
         }
-
         //处理数据
         $template_model       = [
             'touser'      => $this->openid,
@@ -276,27 +177,37 @@ class Template
         return true;
     }
 
-    //模板数据模型
+    /**
+     * @Author 皮泽培
+     * @Created 2019/7/26 17:04
+     * @title  模板数据模型 负责获取模板id缓存数据库
+     * @explain 模板数据模型
+     * @throws \Exception
+     */
     public function ModelData()
     {
+        $this->template_data = BasicsConst::TEMPLATE[$this->template_id_short];//获取模板
+        # 考虑是否加缓存（如果有就缓存）
+        $tempModel = OpenWechatTemplateModel::table();
+        $tempData= $tempModel
+            ->where(['template_id_short'=>$this->template_id_short,'authorizer_appid'=>$this->authorizer_appid])
+            ->cache(['template_id_short',$this->template_id_short],15)#缓存
+            ->fetch(['template_id']);
 
-        $this->template_data = self::TEMPLATE[$this->template_id_short];//获取模板
-
-        $tempModel = TemplateModel::open();
-        $template_id = $tempModel->equals('template_id_short', $this->template_id_short)->value('template_id');
-
-        if(empty($template_id)){
+        if(Helper::init()->is_empty($tempData['template_id'])){
             $this->template_id = $this->getTempLateId();
-
-            $tempModel->add([
+            $tempModel->add(
+                [
+                'authorizer_appid' => $this->authorizer_appid ,
                 'template_id_short' => $this->template_id_short,//模板库中模板的编号，有“TM**”和“OPENTMTM**”等形式
                 'template_id'       => $this->template_id,//模板唯一id
                 'title'             => $this->template_data['title']??'',//
                 'primary_industry'  => $this->template_data['primary_industry']??'',//
                 'deputy_industry'   => $this->template_data['deputy_industry']??'',//
-            ]);
+            ]
+            );
         }else{
-            $this->template_id = $template_id;
+            $this->template_id = $tempData['template_id'];
         }
 
     }

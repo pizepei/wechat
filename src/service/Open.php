@@ -10,6 +10,8 @@
 
 namespace pizepei\wechat\service;
 
+use pizepei\helper\Helper;
+use pizepei\model\redis\Redis;
 use pizepei\wechat\model\OpenAuthorizerUserInfoModel;
 use pizepei\wechat\basics\Func;
 use pizepei\wechat\basics\Prpcrypt;
@@ -214,6 +216,8 @@ class Open
      */
     public static function component_access_token()
     {
+        Helper::init()->syncLock(Redis::init(),['open','component_access_token',self::$Config['appid']]);#设置Lock
+
         $result = self::$Redis->get(self::$Config['cache_prefix'].self::$Config['appid'].'_component_access_token');
         $ComponentVerifyTicket = self::$Redis->get(self::$Config['cache_prefix'].self::$Config['appid'].'_ComponentVerifyTicket');
         if(empty($result)){
@@ -223,14 +227,15 @@ class Open
                 'component_appsecret'=>self::$Config['appsecret'],
                 'component_verify_ticket'=>$ComponentVerifyTicket,
             ];
-            $result = Func::http_request($url,json_encode($postData));
+            $result =  Helper::init()->httpRequest($url,json_encode($postData))['body'];
+//            $result = Func::http_request($url,json_encode($postData));
             $resultJson = json_decode($result,true);
             if(isset($resultJson['errcode'])){
                 throw new \Exception($result);
             }
-
             self::$Redis->set(self::$Config['cache_prefix'].self::$Config['appid'].'_component_access_token',$result,7100);
         }
+        Helper::init()->syncLock(Redis::init(),['open','component_access_token',self::$Config['appid']],false);#解除Lock
         return json_decode($result,true);
     }
     /**
@@ -269,7 +274,7 @@ class Open
                 $postData = [
                     'component_appid'=>self::$Config['appid'],
                 ];
-                $pre_auth_code = Func::http_request($url,json_encode($postData));
+                $pre_auth_code = Helper::init()->httpRequest($url,json_encode($postData))['body'];
                 $pre_auth_code_json = json_decode($pre_auth_code,true);
                 if(isset($resultJson['errcode'])){
                     throw new \Exception($pre_auth_code_json);
@@ -282,7 +287,8 @@ class Open
             $postData = [
                 'component_appid'=>self::$Config['appid'],
             ];
-            $pre_auth_code = Func::http_request($url,json_encode($postData));
+
+            $pre_auth_code = Helper::init()->httpRequest($url,json_encode($postData))['body'];
             $pre_auth_code_json = json_decode($pre_auth_code,true);
             if(isset($resultJson['errcode'])){
                 throw new \Exception($pre_auth_code_json);
@@ -305,7 +311,7 @@ class Open
             "component_appid"=>self::$Config['appid'],
             "authorization_code"=>$request['auth_code'],
         ];
-        $result = Func::http_request($url,json_encode($postData));
+        $result = Helper::init()->httpRequest($url,json_encode($postData))['body'];
         $authorization = json_decode($result,true);
         if(isset($authorization['errcode'])){
             throw new \Exception($result);
@@ -330,6 +336,8 @@ class Open
      */
     public static function authorizer_access_token($authorizerAppid,$authorizerRefreshToken,$restart=false)
     {
+        Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid]);#Lock
+
         $result = self::$Redis->get(self::$Config['cache_prefix'].':'.$authorizerAppid.':authorizer_access_token');
         if(empty($result) || $restart){
             $postData = [
@@ -338,15 +346,17 @@ class Open
                 "authorizer_refresh_token"=>$authorizerRefreshToken,
             ];
             $url =  'https://api.weixin.qq.com/cgi-bin/component/api_authorizer_token?component_access_token='.self::component_access_token()['component_access_token'];
-            $authorization = Func::http_request($url,json_encode($postData));
+
+            $authorization = Helper::init()->httpRequest($url,json_encode($postData))['body'];
             $result = json_decode($authorization,true);
             if(isset($result['errcode'])){
+                Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid],false);#解除Lock
                 throw new \Exception(json_encode($authorization));
             }
             $result['expires_time'] = time()+$result['expires_in']-1;
             $result['expires_date'] = date('Y-m-d H:i:s',time()+$result['expires_in']-1);
             /**
-             * 修改
+             * 修改更新
              */
             OpenAuthorizerUserInfoModel::table()
                 ->where(['component_appid'=>self::$Config['appid'],'authorizer_appid'=>$authorizerAppid])
@@ -354,9 +364,12 @@ class Open
                     'authorizer_refresh_token'=>$result['authorizer_refresh_token'],
                     'authorizer_access_token'=>$result['authorizer_refresh_token'],
                 ]);
-            self::$Redis->set(self::$Config['cache_prefix'].$authorizerAppid.'_authorizer_access_token',json_encode($result),7100);
+            self::$Redis->set(self::$Config['cache_prefix'].':'.$authorizerAppid.':authorizer_access_token',json_encode($result),7100);
+            Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid],false);#解除Lock
             return $result;
         }
+        Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid],false);#解除Lock
+
         return json_decode($result,true);
 
     }
@@ -415,8 +428,7 @@ class Open
             /**
              * 转发
              */
-            $authorization = Func::http_request($url.$param,$decryptionResult['msg']);
-
+            $authorization = Helper::init()->httpRequest($url.$param,$decryptionResult['msg'])['body'];
             if(!empty($appid) && !empty($encodingAesKey) &&!empty($token)){
                 $authorization = self::simpleDecryption( $encodingAesKey,$authorization);
             }
@@ -499,7 +511,8 @@ class Open
             "component_appid"=>self::$Config['appid'],
             "authorizer_appid"=>$authorizer_appid,
         ];
-        $result = Func::http_request($url,json_encode($postData));
+
+        $result = Helper::init()->httpRequest($url,json_encode($postData))['body'];
         $authorization = json_decode($result,true);
 
         if(isset($authorization['errcode'])){
@@ -518,18 +531,22 @@ class Open
      */
     public static function jsapi_ticket($authorizerAppid,$authorizerRefreshToken)
     {
+        Helper::init()->syncLock(Redis::init(),['open','jsapi_ticket',$authorizerAppid]);#设置Lock
         $result = self::$Redis->get(self::$Config['cache_prefix'].$authorizerAppid.'_jsapi_ticket');
         if(!empty($result)){
             $url = 'https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token='.self::authorizer_access_token($authorizerAppid,$authorizerRefreshToken)['authorizer_access_token'].'&type=jsapi';
-            $resultJson = Func::http_request($url);
+            $resultJson = Helper::init()->httpRequest($url)['body'];
             //{"errcode":0,"errmsg":"ok","ticket":"gdzxN2g622vVfv3lEXnBsieQGLWrJc2oC4JUVAGX4zivz5xUvsuDr8v_gHyiZYwhqPiER19QeAIuVQGqM7oL2w","expires_in":7200}
             $resultArr = json_decode($resultJson,true);
             if($resultArr['errmsg'] != 'ok'){
                 throw new \Exception($resultJson);
             }
             self::$Redis->set(self::$Config['cache_prefix'].$authorizerAppid.'_jsapi_ticket',$resultJson,7100);
+            Helper::init()->syncLock(Redis::init(),['open','jsapi_ticket',$authorizerAppid],false);#解除Lock
             return $resultArr;
         }
+        Helper::init()->syncLock(Redis::init(),['open','jsapi_ticket',$authorizerAppid],false);#解除Lock
+
         return json_decode($result,true);
     }
 
