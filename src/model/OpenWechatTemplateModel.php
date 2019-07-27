@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * 微信模板通知
+ */
 
 namespace pizepei\wechat\model;
 

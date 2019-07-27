@@ -160,6 +160,12 @@ class BasicsConst
             ],
         ],
     ];
+
+    const QrcodeType = [
+        1=>'register',
+    ];
+
+
     //----------------回复信息需要的 成员属性---------------------------------------
     //text 文字  image 图片  news 图文模板
     //信息  模板  array

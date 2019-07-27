@@ -216,8 +216,8 @@ class Open
      */
     public static function component_access_token()
     {
-        Helper::init()->syncLock(Redis::init(),['open','component_access_token',self::$Config['appid']]);#设置Lock
 
+        $dd = Helper::init()->syncLock(Redis::init(),['open','component_access_token',self::$Config['appid']],true,'access_token');#设置Lock
         $result = self::$Redis->get(self::$Config['cache_prefix'].self::$Config['appid'].'_component_access_token');
         $ComponentVerifyTicket = self::$Redis->get(self::$Config['cache_prefix'].self::$Config['appid'].'_ComponentVerifyTicket');
         if(empty($result)){
@@ -228,10 +228,10 @@ class Open
                 'component_verify_ticket'=>$ComponentVerifyTicket,
             ];
             $result =  Helper::init()->httpRequest($url,json_encode($postData))['body'];
-//            $result = Func::http_request($url,json_encode($postData));
             $resultJson = json_decode($result,true);
             if(isset($resultJson['errcode'])){
-                throw new \Exception($result);
+                $dd = Helper::init()->syncLock(Redis::init(),['open','component_access_token',self::$Config['appid']],false,'access_token');#解除Lock
+                throw new \Exception($resultJson['errmsg'].'['.$resultJson['errcode'].']');
             }
             self::$Redis->set(self::$Config['cache_prefix'].self::$Config['appid'].'_component_access_token',$result,7100);
         }
@@ -336,10 +336,10 @@ class Open
      */
     public static function authorizer_access_token($authorizerAppid,$authorizerRefreshToken,$restart=false)
     {
-        Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid]);#Lock
-
+        $dd = Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid],true,'access_token');#Lock
         $result = self::$Redis->get(self::$Config['cache_prefix'].':'.$authorizerAppid.':authorizer_access_token');
         if(empty($result) || $restart){
+
             $postData = [
                 "component_appid"=>self::$Config['appid'],
                 "authorizer_appid"=>$authorizerAppid,
@@ -350,7 +350,7 @@ class Open
             $authorization = Helper::init()->httpRequest($url,json_encode($postData))['body'];
             $result = json_decode($authorization,true);
             if(isset($result['errcode'])){
-                Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid],false);#解除Lock
+                Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid],false,'access_token');#解除Lock
                 throw new \Exception(json_encode($authorization));
             }
             $result['expires_time'] = time()+$result['expires_in']-1;
@@ -368,8 +368,7 @@ class Open
             Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid],false);#解除Lock
             return $result;
         }
-        Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid],false);#解除Lock
-
+        $dd = Helper::init()->syncLock(Redis::init(),['open','authorizer_access_token',$authorizerAppid],false);#解除Lock
         return json_decode($result,true);
 
     }

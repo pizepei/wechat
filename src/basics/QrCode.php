@@ -12,6 +12,8 @@ namespace pizepei\wechat\basics;
 
 use pizepei\helper\Helper;
 use pizepei\model\redis\Redis;
+use pizepei\wechat\model\OpenWechatQrCodeModel;
+use pizepei\wechat\model\OpenWechatQrCodeVerifiModel;
 use pizepei\wechat\service\Config;
 use GuzzleHttp\Client;
 
@@ -52,8 +54,11 @@ class QrCode
      * @return bool|mixed
      * @throws \Exception
      */
-    public  function get_ticket($scene_id='',$type=0,$expire_seconds = 60){
+    public  function get_ticket($scene_id='',int $type=0,$expire_seconds = 60,int $terrace=1,$parameter=[]){
 
+        if (!isset(BasicsConst::QrcodeType[$type])){
+            throw new \Exception('Type error');
+        }
         if ($scene_id == ''){
             # 没有设置  自动生成uuid
             $scene_id = Helper::init()->getUuid();
@@ -85,9 +90,50 @@ class QrCode
         $body['src'] = 'https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket='.$body['ticket'];
         $body['scene_id'] = $scene_id;
         $body['type'] = $type;
+        $Open = OpenWechatQrCodeModel::table()->add([
+            'authorizer_appid'=>$this->authorizerAppid,
+            'expire_seconds'=>$expire_seconds,
+            'scene_id'=>$scene_id,
+            'ticket'=>$body['ticket'],
+            'content'=>$qrcode,
+            'terrace'=>$terrace,
+            'terrace_name'=>$parameter['terrace_name']??[],
+            'type'=>BasicsConst::QrcodeType[$type],
+            'extend'=>$parameter,
+        ]);
+        if (Helper::init()->is_empty($Open)){
+            throw new \Exception('创建二维码记录异常');
+        }
+        $body['qr_id'] = key($Open);
+        $body['type'] = BasicsConst::QrcodeType[$type];
         return $body;
 
     }
 
+    public function numberVerificationCode(string $number,int $type,int $terrace,int $frequency)
+    {
+        # 读取记录判断是否已经有发送
+        $OpenWechatQrCodeVerifi = OpenWechatQrCodeVerifiModel::table();
+        $data = $OpenWechatQrCodeVerifi->where([
+            'authorizer_appid'=>$this->authorizerAppid,
+            'number'=>$number,
+            'creation_time'=>['GT',date('Y-m-d H:i:s',time()-$frequency)],
+        ])->fetch();
+        if (!Helper::init()->is_empty($data)){
+            throw new \Exception('频率过高');
+        }
+        # 获取二维码
+        $data = $this->get_ticket('',$type,$terrace);
 
+        if (Helper::init()->is_empty($data['ticket'])){
+        }
+        $data['authorizer_appid'] =$this->authorizerAppid;
+        $data['number'] =$number;
+        $data['qr_id'] =$data['qr_id'];
+        $data['frequency'] =$frequency;
+        $data['reply_content'] = '验证成功';
+        $OpenWechatQrCodeVerifi->add($data);
+        return $data;
+
+    }
 }
