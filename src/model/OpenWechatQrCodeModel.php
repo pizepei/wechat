@@ -28,7 +28,7 @@ class OpenWechatQrCodeModel extends Model
             'TYPE'=>'int(10)', 'DEFAULT'=>60, 'COMMENT'=>'有效期0为永久单位s',
         ],
         'scene_id'=>[
-            'TYPE'=>'uuid', 'DEFAULT'=>false, 'COMMENT'=>'自定义二维码参数',
+            'TYPE'=>'varchar(65)', 'DEFAULT'=>false, 'COMMENT'=>'自定义二维码参数',
         ],
         'ticket'=>[
             'TYPE'=>'varchar(100)', 'DEFAULT'=>false, 'COMMENT'=>'微信二维码标识',

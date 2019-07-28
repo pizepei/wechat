@@ -27,7 +27,7 @@ class BasicsConst
             'name'        => 'SCAN_qrcode_EventKey',          //关键字
             'match_type'   => '10',                //10全匹配,20模糊匹配
             'module_source'   => 'defaultSource',   //模块来源'defaultSource' or 'customSource'
-            'model'       => 'Qrcode',          //模型名称（模块）
+            'model'       => 'qrcode',          //模型名称（模块）
             'method'      => 'index',          //模型方法名称
             'type'        => 'text',          //回复类型
             'status'      => '10',                //是否生效 10生效 20不生效

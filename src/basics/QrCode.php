@@ -63,15 +63,27 @@ class QrCode
             # 没有设置  自动生成uuid
             $scene_id = Helper::init()->getUuid();
         }
+        $scene_id_db = $scene_id;
+//     $action_name   二维码类型，QR_SCENE为临时的整型参数值，QR_STR_SCENE为临时的字符串参数值，QR_LIMIT_SCENE为永久的整型参数值，QR_LIMIT_STR_SCENE为永久的字符串参数值
+        if(is_int($scene_id) && $scene_id <20000000){
+            $scene = 'scene_id';
+            $expire_seconds == 0?$action_name = 'QR_LIMIT_SCENE':$action_name = 'QR_SCENE';
+        }else{
+            $expire_seconds == 0?$action_name = 'QR_LIMIT_STR_SCENE':$action_name = 'QR_STR_SCENE';
+            $scene = 'scene_str';
+            $scene_id = '"'.$scene_id.'"';
+        }
         $authorizer_access_token = $this->config->access_token($this->authorizerAppid)['authorizer_access_token'];
         # 判断永久还是临时   默认临时
-        if($expire_seconds !== 0 ){
-            # 临时
-            $qrcode = '{"expire_seconds": '.$expire_seconds.', "action_name": "QR_SCENE", "action_info": {"scene": {"scene_id": '.$scene_id.'}}}';
+        if($expire_seconds){
+            # 临时 的
+            $qrcode = '{"expire_seconds": '.$expire_seconds.', "action_name": "'.$action_name.'", "action_info": {"scene": {"'.$scene.'": '.$scene_id.'}}}';
         }else{
             # 永久
-            $qrcode = '{"action_name": "QR_LIMIT_SCENE", "action_info": {"scene": {"scene_id": '.$scene_id.'}}}';
+            $qrcode = '{"action_name": "'.$action_name.'", "action_info": {"scene": {"'.$scene.'": '.$scene_id.'}}}';
         }
+
+
         $url = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=".$authorizer_access_token;
         $res  = Helper::init()->httpRequest($url,$qrcode);
         if ($res['RequestInfo']['http_code'] !== 200){
@@ -88,12 +100,12 @@ class QrCode
          * 处理数据
          */
         $body['src'] = 'https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket='.$body['ticket'];
-        $body['scene_id'] = $scene_id;
+        $body['scene_id'] = $scene_id_db;
         $body['type'] = $type;
         $Open = OpenWechatQrCodeModel::table()->add([
             'authorizer_appid'=>$this->authorizerAppid,
             'expire_seconds'=>$expire_seconds,
-            'scene_id'=>$scene_id,
+            'scene_id'=>$scene_id_db,
             'ticket'=>$body['ticket'],
             'content'=>$qrcode,
             'terrace'=>$terrace,
@@ -110,6 +122,14 @@ class QrCode
 
     }
 
+    /**
+     * @param string $number
+     * @param int $type 类型
+     * @param int $terrace 有效期
+     * @param int $frequency 频率
+     * @return bool|mixed
+     * @throws \Exception
+     */
     public function numberVerificationCode(string $number,int $type,int $terrace,int $frequency)
     {
         # 读取记录判断是否已经有发送
