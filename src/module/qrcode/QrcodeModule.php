@@ -8,25 +8,9 @@
  */
 namespace pizepei\wechat\module\qrcode;
 
-use jt\Model;
-use model\archives\AccountModel;
-use model\archives\ThirdAccount;
-use model\log\ThirdRecommendBind;
-use model\openExtension\OpenExtensionAppModel;
-use model\wechat\KeywordLogModel;
-use model\wechat\KeywordModel;
-use model\wechat\Ticket;
-use model\wechat\ChaserviceModel;
-use model\manage\Organization;
-use model\wechat\WechaErrorModel;
+
 use pizepei\wechat\model\OpenWechatQrCodeModel;
 use pizepei\wechat\module\BaseModule;
-use service\openExtension\OpenExtensionUser;
-use service\tenant\TenantAuthorizeBiz;
-use utils\wechatbrief\func;
-use utils\wechatbrief\Module\Keyword\KeywordModule;
-use utils\wechatbrief\Port\AccessToken;
-use utils\wx\common\WechatBase;
 
 class QrcodeModule extends BaseModule
 {
