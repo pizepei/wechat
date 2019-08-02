@@ -10,12 +10,14 @@
 
 namespace pizepei\wechat\basics;
 
+use pizepei\encryption\aes\Prpcrypt;
 use pizepei\helper\Helper;
 use pizepei\model\redis\Redis;
 use pizepei\wechat\model\OpenWechatQrCodeModel;
 use pizepei\wechat\model\OpenWechatQrCodeVerifiModel;
 use pizepei\wechat\service\Config;
 use GuzzleHttp\Client;
+use pizepei\encryption\SHA1;
 
 class QrCode
 {
@@ -83,7 +85,6 @@ class QrCode
             $qrcode = '{"action_name": "'.$action_name.'", "action_info": {"scene": {"'.$scene.'": '.$scene_id.'}}}';
         }
 
-
         $url = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=".$authorizer_access_token;
         $res  = Helper::init()->httpRequest($url,$qrcode);
         if ($res['RequestInfo']['http_code'] !== 200){
@@ -102,7 +103,7 @@ class QrCode
         $body['src'] = 'https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket='.$body['ticket'];
         $body['scene_id'] = $scene_id_db;
         $body['type'] = $type;
-        $Open = OpenWechatQrCodeModel::table()->add([
+        $Open = OpenWechatQrCodeModel::table($this->authorizerAppid)->add([
             'authorizer_appid'=>$this->authorizerAppid,
             'expire_seconds'=>$expire_seconds,
             'scene_id'=>$scene_id_db,
@@ -121,7 +122,6 @@ class QrCode
         return $body;
 
     }
-
     /**
      * @param string $number
      * @param int $type 类型
@@ -154,6 +154,47 @@ class QrCode
         $data['reply_content'] = '验证成功';
         $OpenWechatQrCodeVerifi->add($data);
         return $data;
+    }
+
+
+    public function responseQr($config,$data)
+    {
+        # ip白名单
+        if (!empty($config['ip_white_list']))
+        {
+            $ip = Helper::init()->get_ip();
+            if (!in_array($ip,$config['ip_white_list']))  throw new \Exception('非法请求：'.$ip);
+        }
+        $Prpcrypt = new Prpcrypt($config['encoding_aes_key']);
+        $SHA1 = new SHA1();
+        if (!$SHA1->verifySignature($config['token'],$data)){
+            throw new \Exception('签名错误');
+        }
+        $data = $Prpcrypt->decrypt($data['encrypt_msg']);
+        if (!isset($data[1])) throw new \Exception('数据错误');
+
+        $param = Helper::init()->json_decode($data[1]);
+
+        # 获取二维码
+        $data = $this->get_ticket('',0,$param['terrace']??60);
+
+        if (Helper::init()->is_empty($data['ticket'])){
+            throw new \Exception('请求二维码错误');
+        }
+
+        $data['authorizer_appid'] =$this->authorizerAppid;
+        $data['number'] =$number;
+        $data['qr_id'] =$data['qr_id'];
+        $data['frequency'] =$frequency;
+        $data['reply_content'] = '验证成功';
+        $OpenWechatQrCodeVerifi = OpenWechatQrCodeVerifiModel::table();
+        $OpenWechatQrCodeVerifi->add($data);
+        return $data;
+
+
+
+        $this->numberVerificationCode(13266579753,1,60,2);
+        return $param;
 
     }
 }

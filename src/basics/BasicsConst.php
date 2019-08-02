@@ -162,6 +162,7 @@ class BasicsConst
     ];
 
     const QrcodeType = [
+        0=>'codeApp',
         1=>'register',
     ];
 
