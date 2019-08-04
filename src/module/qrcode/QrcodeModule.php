@@ -9,6 +9,8 @@
 namespace pizepei\wechat\module\qrcode;
 
 
+use pizepei\wechat\model\OpenWechatCodeAppLog;
+use pizepei\wechat\model\OpenWechatCodeAppModel;
 use pizepei\wechat\model\OpenWechatQrCodeModel;
 use pizepei\wechat\module\BaseModule;
 
@@ -29,8 +31,47 @@ class QrcodeModule extends BaseModule
      */
     public function register($Ticket)
     {
-        return ['content'=>'登录成功','reply_type'=>'text'];
+        return ['content'=>'登录成功1','reply_type'=>'text'];
     }
+
+    /**
+     * 验证应用
+     * @param $Ticket
+     * @return array
+     */
+    public function codeApp($Ticket)
+    {
+
+        # 判断是否已经使用
+        if ($Ticket['status'] !== '1'){
+            return ['content'=>'二维码已经被使用','reply_type'=>'text'];
+        }
+        $CodeAppLog = OpenWechatCodeAppLog::table($this->obj->config['authorizer_appid'])
+            ->where([
+                'qr_id'=>$Ticket['id'],
+                'scene_id'=>$this->obj->EventKey,
+            ])
+            ->fetch();
+        if (empty($CodeAppLog)){return ['content'=>'二维码已经被使用','reply_type'=>'text'];}
+        if (empty($CodeAppLog['status'] !== '1')){return ['content'=>'二维码已经被使用!','reply_type'=>'text'];}
+        # 获取app配置
+        $CodeApp = OpenWechatCodeAppModel::table()
+            ->where([
+                'id'=>$CodeAppLog['appid'],
+                'authorizer_appid'=>$this->obj->config['authorizer_appid']
+            ])
+            ->cache(['OpenWechatCodeApp','config'],60)
+            ->fetch();
+        # 根据app配置转发
+//        var_dump($CodeAppLog,$CodeApp);
+
+
+        # 推送 WebSocket
+        # jwt 规则
+
+        return ['content'=>'登录成功12'.$CodeAppLog['id'],'reply_type'=>'text'];
+    }
+
     /**
      * 入口
      */
@@ -40,7 +81,7 @@ class QrcodeModule extends BaseModule
         /**
          * 读取二维码表
          */
-        $Ticket= OpenWechatQrCodeModel::table()
+        $Ticket= OpenWechatQrCodeModel::table($this->obj->config['authorizer_appid'])
             ->where([
                 'ticket'=>$this->obj->Ticket,
                 'authorizer_appid'=>$this->obj->config['authorizer_appid'],
@@ -48,9 +89,9 @@ class QrcodeModule extends BaseModule
             ])
             ->fetch();
         if(empty($Ticket)){
-//            return $content_text = sprintf($this->obj->template_Type, $this->obj->fromUsername, $this->obj->toUsername, $this->obj->time, $this->obj->reply_type, '没有：1'.json_encode($data));
-            return $content_text = sprintf($this->obj->template_Type, $this->obj->fromUsername, $this->obj->toUsername, $this->obj->time, $this->obj->reply_type, '');
+            return $content_text = sprintf($this->obj->template_Type, $this->obj->fromUsername, $this->obj->toUsername, $this->obj->time, $this->obj->reply_type, '11');
         }
+
         $func = $Ticket['type'];
         $result = $this->$func($Ticket);
         if(empty($result)){return ;}

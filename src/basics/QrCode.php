@@ -13,6 +13,7 @@ namespace pizepei\wechat\basics;
 use pizepei\encryption\aes\Prpcrypt;
 use pizepei\helper\Helper;
 use pizepei\model\redis\Redis;
+use pizepei\wechat\model\OpenWechatCodeAppLog;
 use pizepei\wechat\model\OpenWechatQrCodeModel;
 use pizepei\wechat\model\OpenWechatQrCodeVerifiModel;
 use pizepei\wechat\service\Config;
@@ -88,7 +89,7 @@ class QrCode
         $url = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=".$authorizer_access_token;
         $res  = Helper::init()->httpRequest($url,$qrcode);
         if ($res['RequestInfo']['http_code'] !== 200){
-            throw new \Exception('初始化配置失败：请求配置中心失败');
+            throw new \Exception('请求失败'.$res['RequestInfo']['http_code'] );
         }
         if (Helper::init()->is_empty($res,'body')){
             throw new \Exception('请求失败');
@@ -156,7 +157,13 @@ class QrCode
         return $data;
     }
 
-
+    /**
+     * 响应二维码请求
+     * @param $config app配置
+     * @param $data 请求数据
+     * @return array|mixed
+     * @throws \Exception
+     */
     public function responseQr($config,$data)
     {
         # ip白名单
@@ -181,20 +188,32 @@ class QrCode
         if (Helper::init()->is_empty($data['ticket'])){
             throw new \Exception('请求二维码错误');
         }
-
         $data['authorizer_appid'] =$this->authorizerAppid;
-        $data['number'] =$number;
+        $data['code'] = $param['code'];
         $data['qr_id'] =$data['qr_id'];
-        $data['frequency'] =$frequency;
+        $data['type'] =$param['type'];
         $data['reply_content'] = '验证成功';
-        $OpenWechatQrCodeVerifi = OpenWechatQrCodeVerifiModel::table();
-        $OpenWechatQrCodeVerifi->add($data);
-        return $data;
+        $data['appid'] = $config['id'];
+        # 写app入验证日志
+        $CodeAppLog = OpenWechatCodeAppLog::table($this->authorizerAppid);
+        $responseData = $CodeAppLog->add($data);
+        if (empty($responseData)){
+            throw new \Exception('记录失败');
+        }
+        $responseData = reset($responseData);
+        $responseData['appid'] = $config['id'];
+        $responseData['expire_seconds'] = $data['expire_seconds'];
+        $responseData['url'] = $data['url'];
+        $responseData['src'] = $data['src'];
+        $responseData['type'] = $data['type'];
+        $responseData['authorizer_appid'] = $data['authorizer_appid'];
+        $responseData['type'] = $data['type'];
 
+        # 加密数据
+        $encrypt_msg = $Prpcrypt->encrypt(Helper::init()->json_encode($responseData),$config['id']);
+        if (empty($encrypt_msg)) throw new \Exception('加密响应数据错误');
 
-
-        $this->numberVerificationCode(13266579753,1,60,2);
-        return $param;
-
+        $responseData = $SHA1->setSignature($config['token'],$encrypt_msg);
+        return $responseData;
     }
 }
