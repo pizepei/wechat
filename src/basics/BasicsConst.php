@@ -202,4 +202,14 @@ class BasicsConst
         </xml>',
 
     ];
+    /**
+     * codeapp
+     * 安全确认模式下的模板
+     */
+    const codeAppTemplate = [
+        'url_verify'=>[
+            'template'=>'您正在进行{{behavior}}授权操作<br><a href="{{url}}">点击确认</a>',
+            'url'=>'http://oauth.heil.top/wechat/common/code-app/url-affirm',
+        ],
+    ];
 }

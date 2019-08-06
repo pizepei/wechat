@@ -9,6 +9,8 @@
 namespace pizepei\wechat\module\qrcode;
 
 
+use pizepei\helper\Helper;
+use pizepei\service\websocket\Client;
 use pizepei\wechat\model\OpenWechatCodeAppLog;
 use pizepei\wechat\model\OpenWechatCodeAppModel;
 use pizepei\wechat\model\OpenWechatQrCodeModel;
@@ -44,7 +46,7 @@ class QrcodeModule extends BaseModule
 
         # 判断是否已经使用
         if ($Ticket['status'] !== '1'){
-            return ['content'=>'二维码已经被使用','reply_type'=>'text'];
+            return ['content'=>'二维码已经被使用'.$Ticket['status'].'3','reply_type'=>'text'];
         }
         $CodeAppLog = OpenWechatCodeAppLog::table($this->obj->config['authorizer_appid'])
             ->where([
@@ -53,7 +55,7 @@ class QrcodeModule extends BaseModule
             ])
             ->fetch();
         if (empty($CodeAppLog)){return ['content'=>'二维码已经被使用','reply_type'=>'text'];}
-        if (empty($CodeAppLog['status'] !== '1')){return ['content'=>'二维码已经被使用!','reply_type'=>'text'];}
+        if ($CodeAppLog['status'] !== '1'){return ['content'=>'二维码已经被使用!','reply_type'=>'text'];}
         # 获取app配置
         $CodeApp = OpenWechatCodeAppModel::table()
             ->where([
@@ -63,13 +65,25 @@ class QrcodeModule extends BaseModule
             ->cache(['OpenWechatCodeApp','config'],60)
             ->fetch();
         # 根据app配置转发
-//        var_dump($CodeAppLog,$CodeApp);
 
+        # 判断是否安全模式
+        #   安全模式非直接WebSocket通知客户端结果，是直接在公众号中回复a连接<a href="https://bbbdo.ccc">点击确认</a>粉丝点击确认然后通知浏览器WebSocket通知客户端结果
+        #       可以在确认后到自己的域名或者连接下
 
         # 推送 WebSocket
         # jwt 规则
+        $Client = new Client([
+            'data'=>[
+                'uid'=>Helper::init()->getUuid(),
+                'app'=>'codeApp',
+            ],
+        ]);
+        $Client->connect();
+        $res = $Client->sendUser($CodeAppLog['id'],
+            ['type'=>'init','content'=>'您好','appid'=>$CodeAppLog['appid'],'data'>$CodeAppLog]
+            ,true);
 
-        return ['content'=>'登录成功12'.$CodeAppLog['id'],'reply_type'=>'text'];
+        return ['content'=>'登录成功<a href="https://www.bt.cn/invite">点击确认</a>','reply_type'=>'text'];
     }
 
     /**
