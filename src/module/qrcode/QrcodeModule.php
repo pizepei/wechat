@@ -11,6 +11,7 @@ namespace pizepei\wechat\module\qrcode;
 
 use pizepei\helper\Helper;
 use pizepei\service\websocket\Client;
+use pizepei\wechat\basics\BasicsConst;
 use pizepei\wechat\model\OpenWechatCodeAppLog;
 use pizepei\wechat\model\OpenWechatCodeAppModel;
 use pizepei\wechat\model\OpenWechatQrCodeModel;
@@ -72,20 +73,42 @@ class QrcodeModule extends BaseModule
 
         # 推送 WebSocket
         # jwt 规则
-        $Client = new Client([
-            'data'=>[
-                'uid'=>Helper::init()->getUuid(),
-                'app'=>'codeApp',
-            ],
-        ]);
-        $Client->connect();
-        $res = $Client->sendUser($CodeAppLog['id'],
-            ['type'=>'init','content'=>'您好','appid'=>$CodeAppLog['appid'],'data'>$CodeAppLog]
-            ,true);
+//        $Client = new Client([
+//            'data'=>[
+//                'uid'=>Helper::init()->getUuid(),
+//                'app'=>'codeApp',
+//            ],
+//        ]);
+//        $Client->connect();
+//        $res = $Client->sendUser($CodeAppLog['id'],
+//            ['type'=>'init','content'=>'您好','appid'=>$CodeAppLog['appid'],'data'>$CodeAppLog]
+//            ,true);
 
-        return ['content'=>'登录成功<a href="https://www.bt.cn/invite">点击确认</a>','reply_type'=>'text'];
+        /**
+         *
+         */
+        if (isset($CodeApp['extend']['VerifyMode']['templateId'])){
+            $templateData = BasicsConst::codeAppTemplate[$CodeApp['extend']['VerifyMode']['templateId']];
+            $this->str_replace($templateData['templateData'], $templateData['template']);
+            $this->str_replace(['behavior'=>'验证码'], $templateData['template']);
+
+        }
+        return ['content'=>$templateData['template'],'reply_type'=>'text'];
     }
 
+    /**
+     * @param $search
+     * @param $replace
+     * @param $subject
+     * @param null $count
+     */
+    public function str_replace($arr, &$subject)
+    {
+        foreach ($arr as $key=>$value){
+            $subject = str_replace('{{'.$key.'}}',$value,$subject);
+        }
+
+    }
     /**
      * 入口
      */

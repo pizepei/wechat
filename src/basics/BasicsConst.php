@@ -208,8 +208,10 @@ class BasicsConst
      */
     const codeAppTemplate = [
         'url_verify'=>[
-            'template'=>'您正在进行{{behavior}}授权操作<br><a href="{{url}}">点击确认</a>',
-            'url'=>'http://oauth.heil.top/wechat/common/code-app/url-affirm',
+            'template'=>'您正在进行{{behavior}}授权操作<br><a href="{{url}}">点击确认</a>',//通知模板
+            'templateData'=>[
+                'url'=>'http://oauth.heil.top/wechat/common/code-app/url-affirm',//同意授权页面
+            ],
         ],
     ];
 }
