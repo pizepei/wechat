@@ -85,10 +85,28 @@ class QrcodeModule extends BaseModule
 //            ,true);
 
         /**
-         *
+         *判断是否是web url验证模式
+         * urlVerify
          */
-        if (isset($CodeApp['extend']['VerifyMode']['templateId'])){
-            $templateData = BasicsConst::codeAppTemplate[$CodeApp['extend']['VerifyMode']['templateId']];
+        $VerifyMode = 'urlVerify';#暂时
+        if (isset($CodeApp['extend']['VerifyMode'][$VerifyMode]['templateId'])){
+            $nonce =    Helper::str()->int_rand(10);
+            $ticketNonce =    Helper::str()->int_rand(10);
+            $timestamp = time();
+
+            $signature = md5($CodeAppLog['appid'].$timestamp.$nonce.$CodeApp['app_secret'].$CodeAppLog['id']);# 应用appid+nonce随机数+app_secret+$CodeAppLog[id]
+            $ticketSignature = md5($CodeAppLog['appid'].$timestamp.$ticketNonce.$Ticket['id'].$this->obj->EventKey );# 应用appid+ticketNonce随机数+ticketId+scene_id
+
+            $templateData = BasicsConst::codeAppTemplate[$CodeApp['extend']['VerifyMode'][$VerifyMode]['templateId']];
+            $queryData = [
+                'nonce'=>$nonce,
+                'ticketNonce'=>$ticketNonce,
+                'timestamp'=>$timestamp,
+                'signature'=>$signature,
+                'ticketSignature'=>$ticketSignature,
+            ];
+            $templateData['templateData']['url'] .= $CodeAppLog['appid'].'/'.$CodeAppLog['id'].'.html?'.http_build_query($queryData);
+
             $this->str_replace($templateData['templateData'], $templateData['template']);
             $this->str_replace(['behavior'=>'验证码'], $templateData['template']);
 
