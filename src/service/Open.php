@@ -628,4 +628,12 @@ class Open
         return $result;
     }
 
+    public static function OAuth0(string $authorizer_appid,string $redirect_uri,string $scope='snsapi_base',$state='default')
+    {
+        $config = new Config(self::$Redis);
+        $AloneConfig = $config->getAloneConfig(false,$authorizer_appid);
+        return $url = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid='.$authorizer_appid.'&redirect_uri='.$redirect_uri.'&response_type=code&scope='.$scope.'&state='.$state.'&component_appid='.$AloneConfig['appid'].'#wechat_redirect';
+    }
+
+
 }

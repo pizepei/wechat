@@ -208,7 +208,7 @@ class BasicsConst
      */
     const codeAppTemplate = [
         'url_verify'=>[
-            'template'=>'您正在进行{{behavior}}授权操作<br><a href="{{url}}">点击确认</a>',//通知模板
+            'template'=>'您正在进行{{behavior}}授权操作<br><br>             <a href="{{url}}">点我验证</a>',//通知模板
             'templateData'=>[
                 'url'=>'http://oauth.heil.top/wechat/common/code-app/verify/',//同意授权页面
             ],

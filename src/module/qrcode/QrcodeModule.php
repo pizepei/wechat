@@ -90,20 +90,24 @@ class QrcodeModule extends BaseModule
          */
         $VerifyMode = 'urlVerify';#暂时
         if (isset($CodeApp['extend']['VerifyMode'][$VerifyMode]['templateId'])){
+            $templateData = BasicsConst::codeAppTemplate[$CodeApp['extend']['VerifyMode'][$VerifyMode]['templateId']];
             $nonce =    Helper::str()->int_rand(10);
             $ticketNonce =    Helper::str()->int_rand(10);
             $timestamp = time();
-
-            $signature = md5($CodeAppLog['appid'].$timestamp.$nonce.$CodeApp['app_secret'].$CodeAppLog['id']);# 应用appid+nonce随机数+app_secret+$CodeAppLog[id]
-            $ticketSignature = md5($CodeAppLog['appid'].$timestamp.$ticketNonce.$Ticket['id'].$this->obj->EventKey );# 应用appid+ticketNonce随机数+ticketId+scene_id
-
-            $templateData = BasicsConst::codeAppTemplate[$CodeApp['extend']['VerifyMode'][$VerifyMode]['templateId']];
+            $period = time()+$CodeApp['extend']['VerifyMode'][$VerifyMode]['period'];
+            #                              应用appid     时间戳     随机数     应用secret          qr日志表 id（公开的）有效期     openid
+            $signature = md5($CodeAppLog['appid'].$timestamp.$nonce.$CodeApp['app_secret'].$CodeAppLog['id'].$period.$this->obj->fromUsername);
+                                        # 应用appid         时间戳      随机数        qr_id          二维码 scene_id      openid                       公众号appid
+            $ticketSignature = md5($CodeAppLog['appid'].$timestamp.$ticketNonce.$Ticket['id'].$this->obj->EventKey.$this->obj->fromUsername.$this->obj->config['authorizer_appid']);
             $queryData = [
                 'nonce'=>$nonce,
                 'ticketNonce'=>$ticketNonce,
                 'timestamp'=>$timestamp,
                 'signature'=>$signature,
                 'ticketSignature'=>$ticketSignature,
+                'period'=>$period,
+                'authorizer_appid'=>$this->obj->config['authorizer_appid'],
+                'openid'=>$this->obj->fromUsername,
             ];
             $templateData['templateData']['url'] .= $CodeAppLog['appid'].'/'.$CodeAppLog['id'].'.html?'.http_build_query($queryData);
 
