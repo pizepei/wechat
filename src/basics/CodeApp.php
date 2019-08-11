@@ -4,7 +4,9 @@
 namespace pizepei\wechat\basics;
 
 
+use pizepei\helper\Helper;
 use pizepei\model\redis\Redis;
+use pizepei\service\websocket\Client;
 use pizepei\wechat\model\OpenWechatCodeAppLog;
 use pizepei\wechat\model\OpenWechatCodeAppModel;
 use pizepei\wechat\service\Config;
@@ -94,7 +96,65 @@ class CodeApp
      */
     public function urlVerifyHtmlConfirm(array $path,array$get):array
     {
-
+        $result = $this->timestampVerify($path,$get,true);
+        if ($result['result'] == 'on'){
+            return $result;
+        }
+        # 获取微信信息
+        $config = new Config(Redis::init());
+        $OpenConfig = $config->getOpenConfig(false);
+        Open::init($OpenConfig,Redis::init());
+        if ($get['authorizer_appid'] !== $get['appid']){
+            throw new \Exception('错误的公众号信息');
+        }
+        $AccessToken = Open::oauth2AccessToken($get['code'],$get['appid']);
+        if ($AccessToken['openid'] !== $get['openid'])
+        {
+            throw new \Exception('请使用扫描二维码的微信进行操作');
+        }
+        #确认授权
+        if ($get['event'] == 10)
+        {
+            $behavior = 'accept';
+            $msg = '验证成功';
+        }elseif($get['event'] == 20)# 拒绝授权
+        {
+            $behavior = 'refuse';
+            $msg = '已拒绝';
+        }
+        # 修改二维码状态
+        $Confirm = [
+            [
+                'openid'=>$get['openid'],
+                'date'=>date('Y-m-d H:i:s'),
+                'behavior'=>$behavior,
+            ]
+        ];
+        $AppLog = OpenWechatCodeAppLog::table($get['authorizer_appid'])
+            ->where(['appid'=>$path['appid'],'id'=>$path['id'],'status'=>1])
+            ->update(['extend'=>['Confirm'=>$Confirm],'status'=>2]);
+        # 通知客户端
+        # 推送 WebSocket
+        # jwt 规则
+        $Client = new Client([
+            'data'=>[
+                'uid'=>Helper::init()->getUuid(),
+                'app'=>'codeApp',
+            ],
+        ]);
+        $ClientData = [
+            'type'=>'init',
+            'content'=>'授权事件',
+            'appid'=>$path['appid'],
+            'contentData'=>$result['appLog'],
+            'confirm'=>$Confirm
+        ];
+        $Client->connect();
+        $res = $Client->sendUser($path['id'],$ClientData,true);
+        if ($res){
+            return ['result'=>'ok','msg'=>$msg];
+        }
+        return ['result'=>'no','msg'=>'操作失败'];
     }
     /**
      * @Author 皮泽培
@@ -116,7 +176,8 @@ class CodeApp
         $config = new Config(Redis::init());
         $OpenConfig = $config->getOpenConfig(false);
         Open::init($OpenConfig,Redis::init());
-        return Open::OAuth0($get['authorizer_appid'],'http://oauth.heil.top/wechat/common/code-app/verify/00663B8F-D021-373C-8330-E1DD3440FF3C/466A7D68-5BF9-3747-FD32-B7BA1DFC4C9E.html?nonce=6381120999&ticketNonce=4410460646&timestamp=1565429829&signature=b582ef3b0d1bae9a73cc728097a98ef6&ticketSignature=1e941b4c4d54e21f72423a027955243b&period=1565430429&authorizer_appid=wx3260515a4514ec94&openid=oodTXv1fC88aC08dWmWoCHSGo1kY');
+        $url = (Helper::init()->is_https()?'https://':'http://').$_SERVER['HTTP_HOST'].'/wechat/common/code-app/verify/'.$path['appid'].'/'.$path['id'].'.html?'.http_build_query($get);
+        return Open::OAuth($get['authorizer_appid'],urlencode($url));
     }
 
 }

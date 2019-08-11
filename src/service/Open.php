@@ -628,12 +628,29 @@ class Open
         return $result;
     }
 
-    public static function OAuth0(string $authorizer_appid,string $redirect_uri,string $scope='snsapi_base',$state='default')
+    public static function OAuth(string $authorizer_appid,string $redirect_uri,string $scope='snsapi_base',$state='default')
     {
         $config = new Config(self::$Redis);
         $AloneConfig = $config->getAloneConfig(false,$authorizer_appid);
         return $url = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid='.$authorizer_appid.'&redirect_uri='.$redirect_uri.'&response_type=code&scope='.$scope.'&state='.$state.'&component_appid='.$AloneConfig['appid'].'#wechat_redirect';
     }
 
+    public static function oauth2AccessToken($code,$appid)
+    {
+        $url = 'https://api.weixin.qq.com/sns/oauth2/component/access_token?appid='.$appid.'&code='.$code.'&grant_type=authorization_code&component_appid='.self::$Config['appid'].'&component_access_token='.self::component_access_token()['component_access_token'];
+        $data = Helper::init()->httpRequest($url);
+        if ($data['RequestInfo']['http_code'] !== 200){ throw new \Exception('获取微信授权信息失败');}
+        $body = Helper::init()->json_decode($data['body']);
+        if (!Helper::init()->is_empty($body,'errcode')){
+            if ($body['errcode'] ==40029){
+                throw new \Exception('验证过期请重新获取二维码');
+            }
+            throw new \Exception($body['errmsg']);
+        }
+       return $body;
+    }
+    public static function oauth2UserIfon()
+    {
 
+    }
 }
