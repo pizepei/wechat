@@ -653,4 +653,36 @@ class Open
     {
 
     }
+
+    /**
+     * @Author 皮泽培
+     * @Created 2019/8/12 17:50
+     * @param $openid
+     * @param $authorizerAppid
+     * @param $exceptions  是否处理异常
+     * @title  获取粉丝信息
+     * @return array
+
+     * @throws \Exception
+     */
+    public static function fansUserIfon($openid,$authorizerAppid,$exceptions=true)
+    {
+        $config = new Config(self::$Redis);
+        $AloneConfig = $config->getAloneConfig(false,$authorizerAppid);
+        $url = 'https://api.weixin.qq.com/cgi-bin/user/info?access_token='.self::authorizer_access_token($authorizerAppid,$AloneConfig['authorizer_refresh_token'])['authorizer_access_token'].'&openid='.$openid.'&lang=zh_CN';
+        $res = Helper::init()->httpRequest($url);
+        if ($res['code'] !== 200){
+            if ($exceptions){
+                throw new \Exception('请求微信信息失败');
+            }
+        }
+        $body = Helper::init()->json_decode($res['body']);
+        if (!Helper::init()->is_empty($body,'errcode')){
+            if ($exceptions) {
+                throw new \Exception('请求微信信息失败:'.$body['errmsg']);
+            }
+        }
+        return $body;
+    }
+
 }

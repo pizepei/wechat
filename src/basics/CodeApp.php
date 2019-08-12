@@ -4,6 +4,8 @@
 namespace pizepei\wechat\basics;
 
 
+use pizepei\encryption\aes\Prpcrypt;
+use pizepei\encryption\SHA1;
 use pizepei\helper\Helper;
 use pizepei\model\redis\Redis;
 use pizepei\service\websocket\Client;
@@ -124,11 +126,9 @@ class CodeApp
         }
         # 修改二维码状态
         $Confirm = [
-            [
                 'openid'=>$get['openid'],
                 'date'=>date('Y-m-d H:i:s'),
                 'behavior'=>$behavior,
-            ]
         ];
         $AppLog = OpenWechatCodeAppLog::table($get['authorizer_appid'])
             ->where(['appid'=>$path['appid'],'id'=>$path['id'],'status'=>1])
@@ -142,11 +142,34 @@ class CodeApp
                 'app'=>'codeApp',
             ],
         ]);
+
+        # 获取粉丝信息
+        $fansUserIfon = Open::fansUserIfon($get['openid'],$get['appid'],false);
+        $contentData = [
+            'id'=>$path['id'],
+            'code'=>$result['appLog']['code'],
+            'type'=>$result['appLog']['type'],
+            'pattern'=>$result['appLog']['pattern'],
+            'fansUserIfon'=>$fansUserIfon,
+        ];
+        # 加密数据
+        $Prpcrypt = new Prpcrypt($result['appData']['encoding_aes_key']);
+        $encrypted = $Prpcrypt->encrypt(json_encode($contentData),$path['appid']);
+        if (empty($encrypted)){
+            return ['result'=>'no','msg'=>'加密错误'];
+        }
+        # 签名
+        $SHA1 = new SHA1();
+        $encrypted = $SHA1->setSignature($result['appData']['token'],$encrypted);
+        if (empty($encrypted)){
+            return ['result'=>'no','msg'=>'加密签名错误'];
+        }
         $ClientData = [
             'type'=>'init',
             'content'=>'授权事件',
             'appid'=>$path['appid'],
-            'contentData'=>$result['appLog'],
+            'contentData'=>$contentData,
+            'encrypted'=>$encrypted,
             'confirm'=>$Confirm
         ];
         $Client->connect();
