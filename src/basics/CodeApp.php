@@ -145,12 +145,22 @@ class CodeApp
 
         # 获取粉丝信息
         $fansUserIfon = Open::fansUserIfon($get['openid'],$get['appid'],false);
+
+        $Client->connect();
+        #判断是否在线
+        $ClientInfo = $Client->exist($path['id']);
+        if (!$ClientInfo){
+            return ['result'=>'no','msg'=>'请不要关闭电脑页面'];
+        }
         $contentData = [
             'id'=>$path['id'],
             'code'=>$result['appLog']['code'],
             'type'=>$result['appLog']['type'],
             'pattern'=>$result['appLog']['pattern'],
+            'openid'=>$get['openid'],
+            'behavior'=>$behavior,
             'fansUserIfon'=>$fansUserIfon,
+            'remote_ip' =>$ClientInfo['remote_ip'],
         ];
         # 加密数据
         $Prpcrypt = new Prpcrypt($result['appData']['encoding_aes_key']);
@@ -172,7 +182,7 @@ class CodeApp
             'encrypted'=>$encrypted,
             'confirm'=>$Confirm
         ];
-        $Client->connect();
+
         $res = $Client->sendUser($path['id'],$ClientData,true);
         if ($res){
             return ['result'=>'ok','msg'=>$msg];
