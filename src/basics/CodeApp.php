@@ -175,6 +175,11 @@ class CodeApp
         if (empty($encrypted)){
             return ['result'=>'no','msg'=>'加密签名错误'];
         }
+        # 删除敏感数据
+        unset($contentData['pattern']);
+        unset($contentData['fansUserIfon']);
+        unset($contentData['content']);
+
         $ClientData = [
             'type'=>'init',
             'content'=>'授权事件',
