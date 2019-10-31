@@ -194,6 +194,9 @@ class QrCode
         $data['type'] =$param['type'];
         $data['reply_content'] = '验证成功';
         $data['appid'] = $config['id'];
+        $data['content'] = $param;
+
+
         # 写app入验证日志
         $CodeAppLog = OpenWechatCodeAppLog::table($this->authorizerAppid);
         $responseData = $CodeAppLog->add($data);

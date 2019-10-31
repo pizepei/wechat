@@ -159,8 +159,9 @@ class CodeApp
             'pattern'=>$result['appLog']['pattern'],
             'openid'=>$get['openid'],
             'behavior'=>$behavior,
-            'fansUserIfon'=>$fansUserIfon,
             'remote_ip' =>$ClientInfo['remote_ip'],
+            'fansUserIfon'=>$fansUserIfon,
+            'content'=>$result['appLog']['content'],
         ];
         # 加密数据
         $Prpcrypt = new Prpcrypt($result['appData']['encoding_aes_key']);
@@ -177,10 +178,10 @@ class CodeApp
         $ClientData = [
             'type'=>'init',
             'content'=>'授权事件',
-            'appid'=>$path['appid'],
-            'contentData'=>$contentData,
-            'encrypted'=>$encrypted,
-            'confirm'=>$Confirm
+            'appid'=>$path['appid'],//code 应用的id
+            'contentData'=>$contentData,//提供给
+            'encrypted'=>$encrypted,//加密的信息包括微信粉丝信息
+            'confirm'=>$Confirm,//授权结果
         ];
 
         $res = $Client->sendUser($path['id'],$ClientData,true);
@@ -209,7 +210,7 @@ class CodeApp
         $config = new Config(Redis::init());
         $OpenConfig = $config->getOpenConfig(false);
         Open::init($OpenConfig,Redis::init());
-        $url = (Helper::init()->is_https()?'https://':'http://').$_SERVER['HTTP_HOST'].'/wechat/common/code-app/verify/'.$path['appid'].'/'.$path['id'].'.html?'.http_build_query($get);
+        $url = (Helper::init()->is_https()?'https://':'http://').$_SERVER['HTTP_HOST'].'/'.\Deploy::MODULE_PREFIX.'/wechat/common/code-app/verify/'.$path['appid'].'/'.$path['id'].'.html?'.http_build_query($get);
         return Open::OAuth($get['authorizer_appid'],urlencode($url));
     }
 

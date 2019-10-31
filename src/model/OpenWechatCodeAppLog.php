@@ -32,7 +32,7 @@ class OpenWechatCodeAppLog extends Model
             'TYPE'=>'varchar(100)', 'DEFAULT'=>false, 'COMMENT'=>'微信二维码标识',
         ],
         'content'=>[
-            'TYPE'=>'varchar(10)', 'DEFAULT'=>'', 'COMMENT'=>'验证码内容',
+            'TYPE'=>'json', 'DEFAULT'=>false, 'COMMENT'=>'验证内容',
         ],
         'reply_content'=>[
             'TYPE'=>'varchar(1000)', 'DEFAULT'=>'', 'COMMENT'=>'回复文字内容',

@@ -109,6 +109,9 @@ class QrcodeModule extends BaseModule
                 'authorizer_appid'=>$this->obj->config['authorizer_appid'],
                 'openid'=>$this->obj->fromUsername,
             ];
+            if ($templateData['templateData']['url'] == ''){
+//                $_SERVER['HTTP_HOST']
+            }
             $templateData['templateData']['url'] .= $CodeAppLog['appid'].'/'.$CodeAppLog['id'].'.html?'.http_build_query($queryData);
 
             $this->str_replace($templateData['templateData'], $templateData['template']);

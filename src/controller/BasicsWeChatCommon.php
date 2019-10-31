@@ -1,7 +1,9 @@
 <?php
 namespace pizepei\wechat\controller;
 
+use pizepei\helper\Helper;
 use pizepei\model\redis\Redis;
+use pizepei\service\websocket\Client;
 use pizepei\staging\Controller;
 use pizepei\staging\Request;
 use pizepei\wechat\basics\CodeApp;
@@ -43,6 +45,13 @@ class BasicsWeChatCommon extends Controller
      */
     public function test(Request $Request)
     {
+        $Client = new Client([
+            'data'=>[
+                'uid'=>Helper::init()->getUuid(),
+                'app'=>'codeApp',
+            ],
+        ]);
+        $Client->connect();
         return dirname(__FILE__);
     }
     /**
@@ -134,7 +143,7 @@ class BasicsWeChatCommon extends Controller
      *          openid [string]  openid
      *          encrypt_type [string required] 加密类型
      *          msg_signature [string required] 签名
-     *      rule [raw] 数据流
+     *      raw [xml] 数据流
      *          AppId [string] 第三方平台appid
      *          Encrypt [string] 密文
      * @return array [xml]
@@ -151,13 +160,13 @@ class BasicsWeChatCommon extends Controller
             'raw_input'=>file_get_contents("php://input"),
             'request'=>$Request->input(),
             'msg'=>$_SERVER,
-            'xmlToArray'=>$Request->input('','raw')
+            'xmlToArray'=>$Request->input('','xml')
         ]);
         /**
          * 获取配置
          */
         $Config = new Config(Redis::init());
-        $Config = $Config->getOpenConfig(false,$Request->input('AppId','raw'));
+        $Config = $Config->getOpenConfig(false,$Request->input('AppId','xml'));
         /**
          * 初始化类
          */
@@ -174,7 +183,10 @@ class BasicsWeChatCommon extends Controller
             'msg'=>$result,
             'xmlToArray'=>$Request->input('','raw')
         ]);
-        return $result;
+
+
+//        var_dump($result);
+//        return $result;
     }
     /**
      * @Author 皮泽培
@@ -231,7 +243,7 @@ class BasicsWeChatCommon extends Controller
      * @param Request $Request
      *   path [object] 路径参数
      *      appid [uuid] 应用appid
-     *   rule [object] rule参数
+     *   raw [object] rule参数
      *      nonce [string required]
      *      timestamp [int required]
      *      signature [string required]
@@ -285,7 +297,10 @@ class BasicsWeChatCommon extends Controller
         # 验证
         $data = (new CodeApp())->getUrlVerifyOAuth20($Request->path(),$Request->input());
         if (isset($data['result'])){
-            if ($data['result'] == 'on'){ return $this->view('VerifyMode',$data);}
+            if ($data['result'] == 'on'){
+                $path = dirname(__DIR__).DIRECTORY_SEPARATOR.'template';
+                return $this->view('VerifyMode',$data,$path,'html',false);
+            }
         }
         header('Location:'.$data,301);
         return '';
@@ -324,7 +339,7 @@ class BasicsWeChatCommon extends Controller
             $data = (new CodeApp())->initialUrlVerifyHtml($Request->path(),$Request->input());
             # 4 通过API请求确认
             # 5 在API中判断ticketSignature签名是否合法
-            return $this->view('VerifyMode',$data,dirname(__FILE__,2).$this->templatePath);
+            return $this->view('VerifyMode',$data,dirname(__FILE__,2).$this->templatePath,'html',false);
         }else{
             $res = (new CodeApp())->urlVerifyHtmlConfirm($Request->path(),$Request->input());
             return $this->succeed('',$res['msg']);
