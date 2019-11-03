@@ -263,7 +263,7 @@ class BasicsWeChatCommon extends Controller
             ->cache(['OpenWechatCodeApp','config'],60)
             ->fetch();
         if (empty($App)){
-            return $this->error($Request->path('appid'),'非法请求');
+            return $this->error('非法请求'.$Request->path('appid'));
         }
         $QrCode = new QrCode($App['authorizer_appid']);
         return $QrCode->responseQr($App,$Request->raw());
