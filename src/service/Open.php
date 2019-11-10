@@ -643,9 +643,9 @@ class Open
         $body = Helper::init()->json_decode($data['body']);
         if (!Helper::init()->is_empty($body,'errcode')){
             if ($body['errcode'] ==40029){
-                throw new \Exception('验证过期请重新获取二维码');
+                error('验证过期请重新获取二维码');
             }
-            throw new \Exception($body['errmsg']);
+            error('验证过期请重新获取二维码!');
         }
        return $body;
     }

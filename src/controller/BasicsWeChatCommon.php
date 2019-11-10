@@ -266,7 +266,7 @@ class BasicsWeChatCommon extends Controller
             return $this->error('非法请求'.$Request->path('appid'));
         }
         $QrCode = new QrCode($App['authorizer_appid']);
-        return $QrCode->responseQr($App,$Request->raw());
+        return $this->succeed($QrCode->responseQr($App,$Request->raw()));
 
     }
     /**
@@ -320,7 +320,7 @@ class BasicsWeChatCommon extends Controller
      *      openid [string required] 粉丝openid
      *      signature [string required] 签名
      *      authorizer_appid [string required] 微信公众号appid
-     *      appid [string required ] OAuth20返回的微信公众号appid
+     *      appid [string required] OAuth20返回的微信公众号appid
      *      ticketSignature [string required] ticket签名
      *      code [string required] ode作为换取access_token的票据
      *      state [string required] 自定义state参数
@@ -334,6 +334,7 @@ class BasicsWeChatCommon extends Controller
      */
     public function urlVerifyHtml(Request $Request)
     {
+
         if (empty($Request->input('event')))
         {
             $data = (new CodeApp())->initialUrlVerifyHtml($Request->path(),$Request->input());
@@ -342,7 +343,7 @@ class BasicsWeChatCommon extends Controller
             return $this->view('VerifyMode',$data,dirname(__FILE__,2).$this->templatePath,'html',false);
         }else{
             $res = (new CodeApp())->urlVerifyHtmlConfirm($Request->path(),$Request->input());
-            return $this->succeed('',$res['msg']);
+            $this->succeed('',$res['msg']);
         }
     }
 }

@@ -107,12 +107,12 @@ class CodeApp
         $OpenConfig = $config->getOpenConfig(false);
         Open::init($OpenConfig,Redis::init());
         if ($get['authorizer_appid'] !== $get['appid']){
-            throw new \Exception('错误的公众号信息');
+            error('错误的公众号信息');
         }
         $AccessToken = Open::oauth2AccessToken($get['code'],$get['appid']);
         if ($AccessToken['openid'] !== $get['openid'])
         {
-            throw new \Exception('请使用扫描二维码的微信进行操作');
+            error('请使用扫描二维码的微信进行操作');
         }
         #确认授权
         if ($get['event'] == 10)
