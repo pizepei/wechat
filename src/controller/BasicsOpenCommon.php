@@ -31,7 +31,7 @@ class BasicsOpenCommon extends Controller
         'User'=>'pizepei',
         'title'=>'微信开放平台',//控制器标题
         'className'=>'OpenCommon',//门面控制器名称
-        'namespace'=>'app\wechat',//门面控制器命名空间
+        'namespace'=>'wechat',//门面控制器命名空间
         'basePath'=>'/wechat/official/',//基础路由
     ];
 

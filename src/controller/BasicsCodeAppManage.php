@@ -24,7 +24,7 @@ class BasicsCodeAppManage extends Controller
         'User'=>'pizepei',
         'title'=>'微信验证应用管理',//控制器标题
         'className'=>'CodeAppManage',//门面控制器名称
-        'namespace'=>'app\wechat',//门面控制器命名空间
+        'namespace'=>'wechat',//门面控制器命名空间
         'basePath'=>'/wechat/code/appManage/',//基础路由
     ];
     /**
