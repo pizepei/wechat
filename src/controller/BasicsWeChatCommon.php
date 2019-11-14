@@ -24,15 +24,30 @@ use pizepei\wechat\service\Open;
 class BasicsWeChatCommon extends Controller
 {
     /**
-     * 模板路径
-     * @var array
+     * 基础控制器信息
      */
-    public $templatePath = DIRECTORY_SEPARATOR.'template'.DIRECTORY_SEPARATOR;
+    const CONTROLLER_INFO = [
+        'User'=>'pizepei',
+        'title'=>'微信相关基础控制器',//控制器标题
+        'className'=>'WeChatCommon',//门面控制器名称
+        'namespace'=>'app',//门面控制器命名空间
+        'baseAuth'=>'基础权限继承（加命名空间的类名称）',//基础权限继承（加命名空间的类名称）
+        'authGroup'=>'[user:用户相关,admin:管理员相关]',//[user:用户相关,admin:管理员相关] 权限组列表
+        'basePath'=>'/gitlab/',//基础路由
+        'baseParam'=>'[$Request:pizepei\staging\Request]',//依赖注入对象
+    ];
     /**
      * 微信开放平台域名验证
      * @var string
      */
-    public $openWeixin = '';
+    public $openWeixin = '96aa892bea31c23d07a7721ba21bb283';
+
+    /**
+     * 模板路径
+     * @var array
+     */
+    public $templatePath = DIRECTORY_SEPARATOR.'template'.DIRECTORY_SEPARATOR;
+
     /**
      * @param \pizepei\staging\Request $Request [json]
      *      path [object] 路径参数
