@@ -213,7 +213,6 @@ class BasicsWeChatCommon extends Controller
      * @return array [html] 定义输出返回数据
      * @title  获取授权连接
      * @explain 路由功能说明
-     * @authGroup basics.menu.getMenu:权限分组1,basics.index.menu:权限分组2
      * @authExtend UserExtend.list:拓展权限
      * @baseAuth Resource:public
      * @throws \Exception

@@ -73,7 +73,6 @@ class Open
      * @Created 2019/7/13 11:59
      * @title  设置授权信息
      * @explain 设置授权信息 包括 修改授权、先增授权、权限授权
-     * @authGroup basics.menu.getMenu:权限分组1,basics.index.menu:权限分组2
      */
     public static function setAuthorized(&$result,$InfoType)
     {

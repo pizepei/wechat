@@ -1,7 +1,10 @@
 {
   "name":"微信应用",
   "author": "pizepei",
-  "permissions": {
-    "wechat": "微信应用管理"
+  "baseAuthGroup": {
+    "wechat": {
+      "name":"微信应用管理",
+      "explain": ""
+    }
   }
 }

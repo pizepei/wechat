@@ -35,7 +35,6 @@ class BasicsCodeAppManage extends Controller
      * @return array [json] 定义输出返回数据
      * @title  微信验证应用列表
      * @explain 获取应用列表
-     * @authGroup basics.menu.getMenu:权限分组1,basics.index.menu:权限分组2
      * @authExtend UserExtend.list:拓展权限
      * @baseAuth Resource:public
      * @throws \Exception
