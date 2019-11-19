@@ -4,7 +4,7 @@
   "baseAuthGroup": {
     "wechat": {
       "name":"微信应用管理",
-      "explain": ""
+      "explain": "集成微信第三方平台、code验证功能"
     }
   }
 }
