@@ -37,7 +37,7 @@ class OpenWechatKeywordModel extends Model
             'TYPE'=>"ENUM('10','20')", 'DEFAULT'=>'10', 'COMMENT'=>'10全匹配,20模糊匹配',
         ],
         'module_source'=>[
-            'TYPE'=>"ENUM('defaultSource','customSource')", 'DEFAULT'=>'default', 'COMMENT'=>'处理模块来源',
+            'TYPE'=>"ENUM('defaultSource','customSource')", 'DEFAULT'=>'defaultSource', 'COMMENT'=>'处理模块来源',
         ],
         'model'=>[
             'TYPE'=>'varchar(255)', 'DEFAULT'=>'', 'COMMENT'=>'模型名称（模块）',
