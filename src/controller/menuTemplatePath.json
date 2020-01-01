@@ -1,0 +1,45 @@
+[
+  {
+    "title": "微信应用",
+    "name":"wechat",
+    "icon": "layui-icon-login-wechat",
+    "spread": 0,
+    "jump": "",
+    "extend": {},
+    "sort": 50,
+    "list": [
+      {
+        "title": "公众号管理"
+        ,"name":"tencent"
+        ,"spread": 0
+        ,"extend": {}
+        ,"sort": 99
+        ,"list": [
+          {
+            "title": "公众号列表"
+            ,"name":"list"
+            ,"spread": 0
+            ,"extend": {}
+            ,"sort": 99
+          }
+        ]
+      },
+      {
+        "title": "微信验证应用"
+        ,"name":"codeAppManage"
+        ,"spread": 0
+        ,"extend": {}
+        ,"sort": 98
+        ,"list": [
+              {
+                "title": "应用列表"
+                ,"name":"applsit"
+                ,"spread": 0
+                ,"extend": {}
+                ,"sort": 99
+                }
+        ]
+      }
+    ]
+  }
+]
