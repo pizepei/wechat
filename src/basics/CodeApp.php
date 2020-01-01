@@ -146,7 +146,7 @@ class CodeApp
         # 获取粉丝信息
         $fansUserIfon = Open::fansUserIfon($get['openid'],$get['appid'],false);
 
-        $Client->connect();
+        $Client->connect(true);
         #判断是否在线
         $ClientInfo = $Client->exist($path['id']);
         if (!$ClientInfo){

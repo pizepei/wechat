@@ -64,7 +64,7 @@ class BasicsWeChatCommon extends Controller
                 'app'=>'codeApp',
             ],
         ]);
-        $Client->connect();
+        $Client->connect(true);
         return dirname(__FILE__);
     }
     /**
