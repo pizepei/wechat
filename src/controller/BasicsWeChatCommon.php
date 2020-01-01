@@ -134,7 +134,8 @@ class BasicsWeChatCommon extends Controller
 
         if (empty($OpenConfig['transpond_url'])){
             $ReplyApi = new ReplyApi($Request->input(),$AloneConfig,$Request->path('appid'));
-            echo $content =  $ReplyApi->content_type();
+            $content =  $ReplyApi->content_type();
+
             OpenMessageLogModel::table()->add([
                 'title'=>'content',
                 'request'=>$Request->input(),
@@ -142,6 +143,7 @@ class BasicsWeChatCommon extends Controller
                 'appid'=>$Request->path('appid'),
                 'msg'=>[$content],
             ]);
+            return $content;
         }else{
             //转发
         }
