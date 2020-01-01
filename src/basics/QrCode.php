@@ -222,7 +222,7 @@ class QrCode
         ];
         $Client = new \pizepei\service\websocket\Client($wjt);
         # 后期 在配置中写入固定
-        $responseData['jwt_url'] = 'ws://'.$Client->host.':'.$Client->port.$Client->JWT_param;
+        $responseData['jwt_url'] = $config['extend']['webSocks']['type'].$config['extend']['webSocks']['host'].':'.$config['extend']['webSocks']['port'].$Client->JWT_param;
         # 加密数据
         $encrypt_msg = $Prpcrypt->encrypt(Helper::init()->json_encode($responseData),$config['id']);
         if (empty($encrypt_msg)) throw new \Exception('加密响应数据错误');

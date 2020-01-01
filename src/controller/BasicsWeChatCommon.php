@@ -274,7 +274,7 @@ class BasicsWeChatCommon extends Controller
     {
         $App = OpenWechatCodeAppModel::table()
             ->where(['id'=>$Request->path('appid'),'status'=>2])
-            ->cache(['OpenWechatCodeApp','config'],60)
+//            ->cache(['OpenWechatCodeApp','config'],60)
             ->fetch();
         if (empty($App)){
             return $this->error('非法请求'.$Request->path('appid'));
